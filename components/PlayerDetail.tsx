@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Prospect, Team } from '../types';
 import { Button } from './Button';
@@ -93,9 +92,11 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
 
             <div className="flex-1 mb-8">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Scouting Summary</h3>
-              <p className="text-slate-400 text-sm leading-relaxed italic">
-                {prospect.name} is widely regarded as one of the premier talents in this draft class. 
-                His performance at {prospect.college} showed exceptional elite-level traits at {prospect.position}.
+              <p className="text-slate-200 text-base leading-relaxed font-medium">
+                {prospect.scoutingReport}
+              </p>
+              <p className="text-slate-500 text-xs mt-4 italic">
+                Source: 2026 Gridiron Pro Scouting Network
               </p>
             </div>
 

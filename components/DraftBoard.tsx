@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { DraftState, Prospect, Position } from '../types';
 import { Button } from './Button';
@@ -97,14 +96,15 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-left">
-            <thead className="sticky top-0 bg-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <table className="w-full text-left table-fixed">
+            <thead className="sticky top-0 bg-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider z-10">
               <tr>
-                <th className="px-4 py-3">RK</th>
-                <th className="px-4 py-3">PLAYER</th>
-                <th className="px-4 py-3">POS (RANK)</th>
-                <th className="px-4 py-3">SCHOOL</th>
-                <th className="px-4 py-3 text-right">ACTION</th>
+                <th className="px-4 py-3 w-16">RK</th>
+                <th className="px-4 py-3 w-48">PLAYER</th>
+                <th className="px-4 py-3 w-32">POS (RANK)</th>
+                <th className="px-4 py-3 w-64 hidden md:table-cell">SCOUTING REPORT</th>
+                <th className="px-4 py-3 w-32">SCHOOL</th>
+                <th className="px-4 py-3 text-right w-24">ACTION</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
@@ -119,10 +119,10 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                   <td className="px-4 py-4 text-sm font-bold text-slate-500">#{prospect.rank}</td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden group-hover:ring-2 ring-emerald-500/30 transition-all">
+                      <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden group-hover:ring-2 ring-emerald-500/30 transition-all flex-shrink-0">
                         <img src={prospect.headshotUrl} alt="" className="w-full h-full object-cover" />
                       </div>
-                      <span className="text-sm font-semibold text-slate-100">{prospect.name}</span>
+                      <span className="text-sm font-semibold text-slate-100 truncate">{prospect.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-4">
@@ -135,10 +135,15 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                       </span>
                     </div>
                   </td>
+                  <td className="px-4 py-4 hidden md:table-cell">
+                    <p className="text-[11px] text-slate-500 italic line-clamp-2 leading-relaxed">
+                      {prospect.scoutingReport}
+                    </p>
+                  </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
                       <img src={prospect.collegeLogoUrl} className="w-4 h-4 object-contain opacity-80" alt="" />
-                      <span className="text-xs font-medium text-slate-400">{prospect.college}</span>
+                      <span className="text-xs font-medium text-slate-400 truncate">{prospect.college}</span>
                     </div>
                   </td>
                   <td className="px-4 py-4 text-right">
