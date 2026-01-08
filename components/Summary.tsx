@@ -168,7 +168,7 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
 
           <div className="mt-12 flex justify-center">
             <Button className="w-full max-w-sm h-14 uppercase font-oswald tracking-widest" onClick={onRestart}>
-              Start New Simulation
+              Reset Draft
             </Button>
           </div>
         </div>

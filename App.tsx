@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppView, DraftState, Prospect, Position } from './types';
 import { INITIAL_DRAFT_ORDER, PROSPECTS } from './constants';
@@ -69,7 +68,7 @@ const App: React.FC = () => {
     setSelectedProspectId(null);
   }, []);
 
-  // CPU logic with Team Needs prioritization
+  // CPU logic with Weighted Random Team Needs prioritization
   useEffect(() => {
     if (view !== 'DRAFT' || state.currentPickIndex >= state.picks.length || isSimulationPaused) {
       if (state.currentPickIndex >= state.picks.length && state.isDraftStarted && view === 'DRAFT') {
@@ -89,12 +88,48 @@ const App: React.FC = () => {
           .sort((a, b) => a.rank - b.rank);
 
         if (available.length > 0) {
-          // Team Needs logic:
+          // 1. Determine Team Needs
           const teamNeeds = currentPick.team.needs;
-          const bestNeedProspects = available.filter(p => teamNeeds.includes(p.position));
           
-          // Select from needs if available, otherwise fallback to BPA (Best Player Available)
-          const selection = bestNeedProspects.length > 0 ? bestNeedProspects[0] : available[0];
+          // 2. Filter which needs are already fulfilled by this team in previous picks
+          const teamId = currentPick.team.id;
+          const draftedPositionsByTeam = state.picks
+            .filter(p => p.team.id === teamId && p.selectedPlayerId)
+            .map(p => {
+              const player = state.prospects.find(pro => pro.id === p.selectedPlayerId);
+              return player?.position;
+            })
+            .filter(Boolean) as Position[];
+          
+          const remainingNeeds = teamNeeds.filter(need => !draftedPositionsByTeam.includes(need));
+          
+          // 3. Find prospects that fit remaining needs
+          let candidateProspects = available.filter(p => remainingNeeds.includes(p.position));
+          
+          // 4. Fallback to all available (BPA) if no prospects fit remaining needs
+          if (candidateProspects.length === 0) {
+            candidateProspects = available;
+          }
+
+          // 5. Select from top 4 candidates based on weights: 50, 30, 20, 10
+          // Total weight = 110. Since users usually expect 100%, we'll normalize or just use a 110 scale.
+          const topCandidates = candidateProspects.slice(0, 4);
+          const weights = [50, 30, 20, 10].slice(0, topCandidates.length);
+          const totalWeight = weights.reduce((a, b) => a + b, 0);
+          
+          const randomValue = Math.random() * totalWeight;
+          let cumulativeWeight = 0;
+          let selectedIndex = 0;
+
+          for (let i = 0; i < weights.length; i++) {
+            cumulativeWeight += weights[i];
+            if (randomValue <= cumulativeWeight) {
+              selectedIndex = i;
+              break;
+            }
+          }
+
+          const selection = topCandidates[selectedIndex];
           handleDraftPlayer(selection);
         }
       }, 1500); 
@@ -131,41 +166,41 @@ const App: React.FC = () => {
   }, [state.picks, selectedProspectId]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden bg-slate-950">
       {/* Dynamic Header */}
       {view !== 'LOBBY' && (
-        <header className="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-6">
+        <header className="bg-slate-900 border-b border-slate-800 px-4 py-2 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 lg:gap-4">
+            <div className="flex items-center gap-3 lg:gap-6">
               <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase text-emerald-500 tracking-widest">Current Pick</span>
-                <span className="text-3xl font-black font-oswald text-slate-100 italic leading-none">#{state.currentPickIndex + 1}</span>
+                <span className="text-[8px] lg:text-[10px] font-black uppercase text-emerald-500 tracking-widest">Pick</span>
+                <span className="text-lg lg:text-3xl font-black font-oswald text-slate-100 italic leading-none">#{state.currentPickIndex + 1}</span>
               </div>
-              <div className="h-10 w-px bg-slate-800"></div>
+              <div className="h-8 lg:h-10 w-px bg-slate-800"></div>
               {currentPick && (
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 flex items-center justify-center p-2 bg-slate-800 rounded-xl border border-slate-700">
+                <div className="flex items-center gap-2 lg:gap-4">
+                  <div className="w-8 h-8 lg:w-12 lg:h-12 flex items-center justify-center p-1.5 lg:p-2 bg-slate-800 rounded-lg lg:rounded-xl border border-slate-700">
                     <img src={currentPick.team.logoUrl} alt={currentPick.team.name} className="max-w-full max-h-full" />
                   </div>
                   <div className="flex flex-col">
-                    <h2 className="text-xl font-black font-oswald uppercase text-slate-100 tracking-tight leading-none">
+                    <h2 className="text-sm lg:text-xl font-black font-oswald uppercase text-slate-100 tracking-tight leading-none truncate max-w-[120px] lg:max-w-none">
                       {currentPick.team.name}
                     </h2>
-                    <div className="flex items-center gap-3 mt-1.5">
+                    <div className="flex items-center gap-1.5 lg:gap-3 mt-1 lg:mt-1.5">
                       <div className="flex items-center gap-1.5">
-                        <div className={`w-2 h-2 rounded-full ${isSimulationPaused ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`}></div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                          {isSimulationPaused ? 'PAUSED' : (state.userControlledTeams.includes(currentPick.team.id) ? 'Your Turn' : 'CPU Thinking...')}
+                        <div className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full ${isSimulationPaused ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`}></div>
+                        <span className="text-[8px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                          {isSimulationPaused ? 'PAUSED' : (state.userControlledTeams.includes(currentPick.team.id) ? 'Your Turn' : 'CPU')}
                         </span>
                       </div>
-                      <div className="h-4 w-px bg-slate-800"></div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Team Needs:</span>
-                        <div className="flex gap-1">
+                      <div className="hidden md:block h-4 w-px bg-slate-800"></div>
+                      <div className="hidden md:flex items-center gap-2">
+                        <span className="text-[8px] lg:text-[10px] font-black text-slate-500 uppercase tracking-widest">Needs:</span>
+                        <div className="flex gap-1 overflow-x-auto max-w-[150px] scrollbar-none">
                           {currentPick.team.needs.map((need) => (
                             <span 
                               key={need}
-                              className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${
+                              className={`text-[8px] lg:text-[9px] font-black px-1 lg:px-1.5 py-0.5 rounded border whitespace-nowrap ${
                                 fulfilledNeeds.has(need) 
                                   ? 'bg-slate-800 border-slate-700 text-slate-600 line-through opacity-50' 
                                   : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
@@ -182,52 +217,41 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               {view === 'DRAFT' && (
                 <>
                   <Button 
-                    variant="danger"
+                    variant="ghost"
                     onClick={restartApp}
-                    className="h-10 px-4 text-xs uppercase font-bold"
-                    title="Exit and reset draft"
+                    className="h-8 lg:h-10 px-2 lg:px-4 text-[10px] uppercase font-bold border border-slate-700"
+                    title="Exit"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/></svg>
-                    <span className="hidden sm:inline">Setup</span>
+                    <span className="hidden sm:inline">Exit</span>
                   </Button>
                   <Button 
                     variant={isSimulationPaused ? 'primary' : 'secondary'}
                     onClick={() => setIsSimulationPaused(!isSimulationPaused)}
-                    className="h-10 px-4 text-xs uppercase font-bold min-w-[140px]"
+                    className="h-8 lg:h-10 px-2 lg:px-4 text-[10px] uppercase font-bold min-w-[80px] lg:min-w-[120px]"
                   >
-                    {isSimulationPaused ? (
-                      <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Resume</>
-                    ) : (
-                      <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Pause</>
-                    )}
+                    {isSimulationPaused ? 'Resume' : 'Pause'}
                   </Button>
                 </>
               )}
-              
-              <div className="hidden lg:flex flex-col items-end">
-                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Next On Clock</span>
-                 <div className="flex items-center gap-2">
-                   <span className="text-sm font-bold text-slate-300">
-                     {state.picks[state.currentPickIndex + 1]?.team.name || 'End of Draft'}
-                   </span>
-                 </div>
-              </div>
             </div>
           </div>
         </header>
       )}
 
-      <main className="flex-1">
+      <main className="flex-1 overflow-hidden">
         {view === 'LOBBY' && (
-          <Lobby 
-            userControlledTeams={userControlledTeams} 
-            setUserControlledTeams={setUserControlledTeams} 
-            onStart={startDraft} 
-          />
+          <div className="h-full overflow-y-auto">
+            <Lobby 
+              userControlledTeams={userControlledTeams} 
+              setUserControlledTeams={setUserControlledTeams} 
+              onStart={startDraft} 
+            />
+          </div>
         )}
 
         {view === 'DRAFT' && (
@@ -240,11 +264,13 @@ const App: React.FC = () => {
         )}
 
         {view === 'SUMMARY' && (
-          <Summary 
-            state={state} 
-            onRestart={restartApp} 
-            onSelectProspect={(p) => setSelectedProspectId(p.id)}
-          />
+          <div className="h-full overflow-y-auto">
+            <Summary 
+              state={state} 
+              onRestart={restartApp} 
+              onSelectProspect={(p) => setSelectedProspectId(p.id)}
+            />
+          </div>
         )}
 
         {/* Global Player Detail Modal */}
@@ -260,8 +286,8 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer Branding */}
-      <footer className="p-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-widest mt-auto">
+      {/* Footer Branding - Minimal height */}
+      <footer className="hidden lg:block py-1.5 px-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-widest bg-slate-900/50 border-t border-slate-800 shrink-0">
         &copy; 2026 GRIDIRON DRAFT SIMULATOR PRO &bull; ADVANCED SIMULATION ENGINE
       </footer>
     </div>
