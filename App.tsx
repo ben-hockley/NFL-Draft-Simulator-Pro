@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppView, DraftState, Prospect, Position } from './types';
 import { INITIAL_DRAFT_ORDER, PROSPECTS } from './constants';
@@ -10,24 +11,30 @@ import { Button } from './components/Button';
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('LOBBY');
   const [userControlledTeams, setUserControlledTeams] = useState<string[]>([]);
+  const [roundsToSimulate, setRoundsToSimulate] = useState<number>(1);
   const [selectedProspectId, setSelectedProspectId] = useState<string | null>(null);
   const [state, setState] = useState<DraftState>({
     currentPickIndex: 0,
     picks: INITIAL_DRAFT_ORDER,
     userControlledTeams: [],
     isDraftStarted: false,
-    prospects: PROSPECTS
+    prospects: PROSPECTS,
+    roundsToSimulate: 1
   });
 
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
 
   const startDraft = () => {
+    // Filter INITIAL_DRAFT_ORDER based on selected rounds
+    const filteredPicks = INITIAL_DRAFT_ORDER.filter(p => p.round <= roundsToSimulate);
+    
     setState({
       ...state,
       userControlledTeams,
       isDraftStarted: true,
       currentPickIndex: 0,
-      picks: INITIAL_DRAFT_ORDER.map(p => ({ ...p, selectedPlayerId: undefined }))
+      roundsToSimulate,
+      picks: filteredPicks.map(p => ({ ...p, selectedPlayerId: undefined }))
     });
     setIsSimulationPaused(false);
     setView('DRAFT');
@@ -43,7 +50,8 @@ const App: React.FC = () => {
       picks: INITIAL_DRAFT_ORDER,
       userControlledTeams: [],
       isDraftStarted: false,
-      prospects: PROSPECTS
+      prospects: PROSPECTS,
+      roundsToSimulate: 1
     });
   };
 
@@ -78,6 +86,8 @@ const App: React.FC = () => {
     }
 
     const currentPick = state.picks[state.currentPickIndex];
+    if (!currentPick) return;
+
     const isCPU = !state.userControlledTeams.includes(currentPick.team.id);
 
     if (isCPU) {
@@ -99,7 +109,7 @@ const App: React.FC = () => {
               const player = state.prospects.find(pro => pro.id === p.selectedPlayerId);
               return player?.position;
             })
-            .filter(Boolean) as Position[];
+            .filter(Boolean);
           
           const remainingNeeds = teamNeeds.filter(need => !draftedPositionsByTeam.includes(need));
           
@@ -112,7 +122,6 @@ const App: React.FC = () => {
           }
 
           // 5. Select from top 4 candidates based on weights: 50, 30, 20, 10
-          // Total weight = 110. Since users usually expect 100%, we'll normalize or just use a 110 scale.
           const topCandidates = candidateProspects.slice(0, 4);
           const weights = [50, 30, 20, 10].slice(0, topCandidates.length);
           const totalWeight = weights.reduce((a, b) => a + b, 0);
@@ -132,16 +141,24 @@ const App: React.FC = () => {
           const selection = topCandidates[selectedIndex];
           handleDraftPlayer(selection);
         }
-      }, 1500); 
+      }, 1000); 
       return () => clearTimeout(timer);
     }
   }, [view, state.currentPickIndex, state.userControlledTeams, state.picks, state.prospects, state.isDraftStarted, handleDraftPlayer, isSimulationPaused]);
 
   const currentPick = state.picks[state.currentPickIndex];
   
+  // Calculate all picks for the current team
+  const currentTeamAllPicks = useMemo(() => {
+    if (!currentPick) return [];
+    return state.picks
+      .filter(p => p.team.id === currentPick.team.id)
+      .map(p => p.pickNumber);
+  }, [currentPick, state.picks]);
+
   // Calculate which needs are fulfilled for the current team
   const fulfilledNeeds = useMemo(() => {
-    if (!currentPick) return new Set<Position>();
+    if (!currentPick) return new Set<string>();
     const teamId = currentPick.team.id;
     const draftedPositionsByTeam = state.picks
       .filter(p => p.team.id === teamId && p.selectedPlayerId)
@@ -149,7 +166,7 @@ const App: React.FC = () => {
         const player = state.prospects.find(pro => pro.id === p.selectedPlayerId);
         return player?.position;
       })
-      .filter(Boolean) as Position[];
+      .filter(Boolean) as string[];
     
     return new Set(draftedPositionsByTeam);
   }, [currentPick, state.picks, state.prospects]);
@@ -171,36 +188,60 @@ const App: React.FC = () => {
       {view !== 'LOBBY' && (
         <header className="bg-slate-900 border-b border-slate-800 px-4 py-2 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 lg:gap-4">
-            <div className="flex items-center gap-3 lg:gap-6">
-              <div className="flex flex-col">
-                <span className="text-[8px] lg:text-[10px] font-black uppercase text-emerald-500 tracking-widest">Pick</span>
-                <span className="text-lg lg:text-3xl font-black font-oswald text-slate-100 italic leading-none">#{state.currentPickIndex + 1}</span>
+            <div className="flex items-center gap-3 lg:gap-6 flex-1 min-w-0">
+              <div className="flex flex-col shrink-0">
+                <span className="text-[8px] lg:text-[10px] font-black uppercase text-emerald-500 tracking-widest">
+                  Pick #{state.currentPickIndex + 1}
+                </span>
+                <span className="text-sm lg:text-xl font-black font-oswald text-slate-100 italic leading-none">
+                  Round {currentPick?.round || 1}
+                </span>
               </div>
-              <div className="h-8 lg:h-10 w-px bg-slate-800"></div>
+              <div className="h-8 lg:h-10 w-px bg-slate-800 shrink-0"></div>
               {currentPick && (
-                <div className="flex items-center gap-2 lg:gap-4">
-                  <div className="w-8 h-8 lg:w-12 lg:h-12 flex items-center justify-center p-1.5 lg:p-2 bg-slate-800 rounded-lg lg:rounded-xl border border-slate-700">
+                <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
+                  <div className="w-8 h-8 lg:w-12 lg:h-12 flex items-center justify-center p-1.5 lg:p-2 bg-slate-800 rounded-lg lg:rounded-xl border border-slate-700 shrink-0">
                     <img src={currentPick.team.logoUrl} alt={currentPick.team.name} className="max-w-full max-h-full" />
                   </div>
-                  <div className="flex flex-col">
-                    <h2 className="text-sm lg:text-xl font-black font-oswald uppercase text-slate-100 tracking-tight leading-none truncate max-w-[120px] lg:max-w-none">
-                      {currentPick.team.name}
-                    </h2>
-                    <div className="flex items-center gap-1.5 lg:gap-3 mt-1 lg:mt-1.5">
-                      <div className="flex items-center gap-1.5">
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
+                      <h2 className="text-sm lg:text-xl font-black font-oswald uppercase text-slate-100 tracking-tight leading-none truncate max-w-[120px] lg:max-w-none">
+                        {currentPick.team.name}
+                      </h2>
+                      {/* Team Pick Numbers List */}
+                      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar scrollbar-none py-0.5 max-w-[150px] lg:max-w-none">
+                        <span className="text-[7px] lg:text-[9px] font-black text-slate-600 uppercase shrink-0">Picks:</span>
+                        {currentTeamAllPicks.map(pNum => (
+                          <span 
+                            key={pNum} 
+                            className={`text-[8px] lg:text-[10px] font-bold px-1 rounded flex items-center justify-center shrink-0 min-w-[20px] ${
+                              pNum === currentPick.pickNumber 
+                                ? 'bg-emerald-500 text-white shadow-sm ring-1 ring-emerald-400' 
+                                : pNum < currentPick.pickNumber 
+                                  ? 'bg-slate-800 text-slate-500' 
+                                  : 'bg-slate-700 text-slate-300'
+                            }`}
+                          >
+                            {pNum}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 lg:gap-3 mt-1 lg:mt-1.5 overflow-hidden">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <div className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full ${isSimulationPaused ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`}></div>
                         <span className="text-[8px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                           {isSimulationPaused ? 'PAUSED' : (state.userControlledTeams.includes(currentPick.team.id) ? 'Your Turn' : 'CPU')}
                         </span>
                       </div>
-                      <div className="hidden md:block h-4 w-px bg-slate-800"></div>
-                      <div className="hidden md:flex items-center gap-2">
-                        <span className="text-[8px] lg:text-[10px] font-black text-slate-500 uppercase tracking-widest">Needs:</span>
-                        <div className="flex gap-1 overflow-x-auto max-w-[150px] scrollbar-none">
+                      <div className="hidden md:block h-4 w-px bg-slate-800 shrink-0"></div>
+                      <div className="hidden md:flex items-center gap-2 min-w-0">
+                        <span className="text-[8px] lg:text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">Needs:</span>
+                        <div className="flex gap-1 overflow-x-auto scrollbar-none no-scrollbar pb-0.5">
                           {currentPick.team.needs.map((need) => (
                             <span 
                               key={need}
-                              className={`text-[8px] lg:text-[9px] font-black px-1 lg:px-1.5 py-0.5 rounded border whitespace-nowrap ${
+                              className={`text-[8px] lg:text-[9px] font-black px-1.5 py-0.5 rounded border whitespace-nowrap ${
                                 fulfilledNeeds.has(need) 
                                   ? 'bg-slate-800 border-slate-700 text-slate-600 line-through opacity-50' 
                                   : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
@@ -217,7 +258,7 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {view === 'DRAFT' && (
                 <>
                   <Button 
@@ -245,13 +286,13 @@ const App: React.FC = () => {
 
       <main className="flex-1 overflow-hidden">
         {view === 'LOBBY' && (
-          <div className="h-full overflow-y-auto">
-            <Lobby 
-              userControlledTeams={userControlledTeams} 
-              setUserControlledTeams={setUserControlledTeams} 
-              onStart={startDraft} 
-            />
-          </div>
+          <Lobby 
+            userControlledTeams={userControlledTeams} 
+            setUserControlledTeams={setUserControlledTeams} 
+            roundsToSimulate={roundsToSimulate}
+            setRoundsToSimulate={setRoundsToSimulate}
+            onStart={startDraft} 
+          />
         )}
 
         {view === 'DRAFT' && (
@@ -264,16 +305,13 @@ const App: React.FC = () => {
         )}
 
         {view === 'SUMMARY' && (
-          <div className="h-full overflow-y-auto">
-            <Summary 
-              state={state} 
-              onRestart={restartApp} 
-              onSelectProspect={(p) => setSelectedProspectId(p.id)}
-            />
-          </div>
+          <Summary 
+            state={state} 
+            onRestart={restartApp} 
+            onSelectProspect={(p) => setSelectedProspectId(p.id)}
+          />
         )}
 
-        {/* Global Player Detail Modal */}
         {selectedProspect && (
           <PlayerDetail 
             prospect={selectedProspect}
@@ -286,7 +324,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer Branding - Minimal height */}
       <footer className="hidden lg:block py-1.5 px-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-widest bg-slate-900/50 border-t border-slate-800 shrink-0">
         &copy; 2026 GRIDIRON DRAFT SIMULATOR PRO &bull; ADVANCED SIMULATION ENGINE
       </footer>

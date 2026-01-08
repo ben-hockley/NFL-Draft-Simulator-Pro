@@ -17,8 +17,10 @@
       .font-oswald {
         font-family: 'Oswald', sans-serif;
       }
+      /* Custom Scrollbar */
       ::-webkit-scrollbar {
         width: 8px;
+        height: 8px;
       }
       ::-webkit-scrollbar-track {
         background: #1e293b;
@@ -29,6 +31,16 @@
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #64748b;
+      }
+      /* Utility to hide scrollbars */
+      .no-scrollbar::-webkit-scrollbar,
+      .scrollbar-none::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar,
+      .scrollbar-none {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
       }
     </style>
   <script type="importmap">

@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { TEAMS } from '../constants';
 import { Button } from './Button';
 import { Team } from '../types';
@@ -6,12 +7,16 @@ import { Team } from '../types';
 interface LobbyProps {
   userControlledTeams: string[];
   setUserControlledTeams: (ids: string[]) => void;
+  roundsToSimulate: number;
+  setRoundsToSimulate: (num: number) => void;
   onStart: () => void;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({ 
   userControlledTeams, 
   setUserControlledTeams, 
+  roundsToSimulate,
+  setRoundsToSimulate,
   onStart 
 }) => {
   const toggleTeam = (teamId: string) => {
@@ -40,6 +45,26 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Main Selection Area - Scrollable */}
       <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-thin scrollbar-thumb-slate-700">
         <div className="max-w-5xl mx-auto">
+          {/* Rounds Selection */}
+          <div className="mb-6 p-4 bg-slate-900/50 rounded-2xl border border-slate-800/60">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Draft Length</h3>
+            <div className="flex gap-2">
+              {[1, 2, 3].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRoundsToSimulate(r)}
+                  className={`flex-1 py-3 px-4 rounded-xl border font-oswald text-lg transition-all ${
+                    roundsToSimulate === r
+                      ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                      : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'
+                  }`}
+                >
+                  {r} {r === 1 ? 'ROUND' : 'ROUNDS'}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Control Bar */}
           <div className="flex justify-between items-center mb-4 px-1">
             <h2 className="text-xs lg:text-base font-bold text-slate-200 uppercase tracking-widest flex items-center gap-2">

@@ -1,5 +1,5 @@
 
-export type Position = 'QB' | 'RB' | 'WR' | 'TE' | 'OT' | 'OG' | 'C' | 'DE' | 'DT' | 'LB' | 'CB' | 'S' | 'K' | 'P';
+export type Position = 'QB' | 'RB' | 'WR' | 'TE' | 'OT' | 'OG' | 'C' | 'DE' | 'DT' | 'LB' | 'CB' | 'S' | 'K' | 'P' | 'IOL' | 'DL' | 'EDGE';
 
 export interface Prospect {
   id: string;
@@ -7,7 +7,7 @@ export interface Prospect {
   headshotUrl: string;
   college: string;
   collegeLogoUrl: string;
-  position: Position;
+  position: string;
   height: string;
   weight: number;
   rank: number;
@@ -19,7 +19,7 @@ export interface Team {
   name: string;
   logoUrl: string;
   color: string;
-  needs: Position[];
+  needs: string[];
 }
 
 export interface DraftPick {
@@ -37,4 +37,5 @@ export interface DraftState {
   userControlledTeams: string[];
   isDraftStarted: boolean;
   prospects: Prospect[];
+  roundsToSimulate: number;
 }
