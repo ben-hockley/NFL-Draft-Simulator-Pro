@@ -211,6 +211,21 @@ const App: React.FC = () => {
       .map(p => p.pickNumber);
   }, [currentPick, picksInScope]);
 
+  const fulfilledNeeds = useMemo(() => {
+    if (!currentPick) return new Set<string>();
+    const teamId = currentPick.team.id;
+    // Look through ALL picks made by this team in the 2026 draft so far
+    const draftedPositionsByTeam = state.picks
+      .filter(p => p.team.id === teamId && p.selectedPlayerId)
+      .map(p => {
+        const player = state.prospects.find(pro => pro.id === p.selectedPlayerId);
+        return player?.position;
+      })
+      .filter(Boolean) as string[];
+    
+    return new Set(draftedPositionsByTeam);
+  }, [currentPick, state.picks, state.prospects]);
+
   const selectedProspect = useMemo(() => 
     PROSPECTS.find(p => p.id === selectedProspectId) || null, 
     [selectedProspectId]
@@ -264,6 +279,28 @@ const App: React.FC = () => {
                           </span>
                         ))}
                       </div>
+                      
+                      {/* Team Needs Display for Desktop */}
+                      <div className="hidden xl:flex items-center gap-2 ml-4">
+                        <span className="text-[9px] font-black text-slate-600 uppercase shrink-0">Needs:</span>
+                        <div className="flex gap-1">
+                          {currentPick.team.needs.map(need => {
+                            const isFulfilled = fulfilledNeeds.has(need);
+                            return (
+                              <span 
+                                key={need}
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                                  isFulfilled 
+                                    ? 'bg-slate-800/50 border-slate-700 text-slate-600 line-through opacity-60' 
+                                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                }`}
+                              >
+                                {need}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1.5 lg:gap-3 mt-1 lg:mt-1.5 overflow-hidden">
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -271,6 +308,18 @@ const App: React.FC = () => {
                         <span className="text-[8px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                           {isSimulationPaused ? 'PAUSED' : (state.userControlledTeams.includes(currentPick.team.id) ? 'Your Turn' : 'CPU')}
                         </span>
+                      </div>
+                      
+                      {/* Sub-line Needs for Large Screens */}
+                      <div className="hidden lg:flex xl:hidden items-center gap-2">
+                         <span className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter shrink-0">Team Needs:</span>
+                         <div className="flex gap-1 overflow-hidden">
+                            {currentPick.team.needs.map(need => (
+                              <span key={need} className={`text-[8px] font-bold uppercase ${fulfilledNeeds.has(need) ? 'text-slate-600 line-through' : 'text-slate-400'}`}>
+                                {need}
+                              </span>
+                            ))}
+                         </div>
                       </div>
                     </div>
                   </div>
