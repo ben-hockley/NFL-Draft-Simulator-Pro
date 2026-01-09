@@ -27,7 +27,8 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   const [activeTab, setActiveTab] = useState<BoardTab>('PROSPECTS');
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const currentPick = state.picks[state.currentPickIndex];
+  const picksInScope = useMemo(() => state.picks.filter(p => p.round <= state.roundsToSimulate), [state.picks, state.roundsToSimulate]);
+  const currentPick = picksInScope[state.currentPickIndex];
   const isUserTurn = state.userControlledTeams.includes(currentPick?.team.id);
   
   const draftedPlayerIds = useMemo(() => 
@@ -57,9 +58,9 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   }, [availableProspects, filter, collegeFilter]);
 
   const filteredTrackerPicks = useMemo(() => {
-    if (teamTrackerFilter === 'ALL') return state.picks;
-    return state.picks.filter(p => p.team.id === teamTrackerFilter);
-  }, [state.picks, teamTrackerFilter]);
+    if (teamTrackerFilter === 'ALL') return picksInScope;
+    return picksInScope.filter(p => p.team.id === teamTrackerFilter);
+  }, [picksInScope, teamTrackerFilter]);
 
   // Helper to calculate position rank based on all prospects
   const getPositionRank = (prospect: Prospect) => {
@@ -104,7 +105,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
           }`}
         >
           Draft Tracker
-          {!isUserTurn && !state.picks[state.currentPickIndex]?.selectedPlayerId && (
+          {!isUserTurn && currentPick && !currentPick.selectedPlayerId && (
              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           )}
         </button>
@@ -258,9 +259,9 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
             <div className="p-3 space-y-1.5">
               {filteredTrackerPicks.map((pick, index) => {
                 const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
-                // Find actual index in original picks array for auto-scroll and turn tracking
-                const originalIndex = state.picks.findIndex(p => p.pickNumber === pick.pickNumber);
-                const isCurrent = originalIndex === state.currentPickIndex;
+                // Use scope-based index for visual highlighting
+                const scopeIndex = picksInScope.findIndex(p => p.pickNumber === pick.pickNumber);
+                const isCurrent = scopeIndex === state.currentPickIndex;
                 const isCompleted = !!pick.selectedPlayerId;
 
                 // Check for round transition
@@ -280,7 +281,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                       </div>
                     )}
                     <div 
-                      data-pick-index={originalIndex}
+                      data-pick-index={scopeIndex}
                       className={`w-full flex gap-3 items-start p-2 rounded-lg transition-all border ${
                         isCurrent 
                           ? 'bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/20' 
@@ -290,10 +291,15 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                       } ${player ? 'cursor-pointer hover:bg-white/5' : ''}`}
                       onClick={() => player && onSelectProspect(player)}
                     >
-                      <div className={`flex-shrink-0 w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold transition-colors ${
+                      <div className={`flex-shrink-0 w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold transition-colors relative ${
                         isCurrent ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-800 text-slate-500'
                       }`}>
                         {pick.pickNumber}
+                        {pick.isTraded && (
+                           <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5 border border-slate-900 shadow-sm" title="Pick Traded">
+                              <svg className="w-1.5 h-1.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                           </div>
+                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">

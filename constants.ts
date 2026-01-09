@@ -1,3 +1,4 @@
+
 import { Prospect, Team, Position, DraftPick } from './types';
 
 export const ALL_TEAMS: Record<string, Team> = {
@@ -36,6 +37,20 @@ export const ALL_TEAMS: Record<string, Team> = {
 };
 
 export const TEAMS: Team[] = Object.values(ALL_TEAMS);
+
+// Approximate Draft Pick Value based on Rich Hill / Jimmy Johnson charts
+export const getPickValue = (pickNumber: number): number => {
+  // Formula: 3000 / (pick ^ 0.72)
+  return Math.round(3000 / Math.pow(pickNumber, 0.72));
+};
+
+// Round end pick numbers for 2026 sequence
+export const ROUND_END_PICKS = [32, 64, 100, 138, 181, 216, 257];
+
+export const getFutureRoundValue = (round: number): number => {
+  const pickNum = ROUND_END_PICKS[round - 1] || 257;
+  return getPickValue(pickNum);
+};
 
 const DRAFT_SEQUENCE = [
   // Round 1
@@ -393,5 +408,5 @@ export const PROSPECTS: Prospect[] = [
   { id: 'p297', name: 'Kendal Daniels', headshotUrl: getEspnUrl(4595343), college: 'Oklahoma', position: 'S', height: '6\'4"', weight: 230, rank: 297, collegeLogoUrl: getCollegeLogoUrl('Oklahoma'), scoutingReport: 'Massive safety prospect with linebacker-like range and power. He is comfortable in both press and off-coverage and is a primary tackler.' },
   { id: 'p298', name: 'Ben Taylor-Whitfield', headshotUrl: getEspnUrl(5151167), college: 'TCU', position: 'OT', height: '6\'5"', weight: 310, rank: 298, collegeLogoUrl: getCollegeLogoUrl('TCU'), scoutingReport: 'Technically sound lineman with experience on both sides. He displays high football IQ and consistently wins with superior hand placement.' },
   { id: 'p299', name: 'Red Murdock', headshotUrl: getEspnUrl(4912190), college: 'Buffalo', position: 'LB', height: '6\'3"', weight: 230, rank: 299, collegeLogoUrl: getCollegeLogoUrl('Buffalo'), scoutingReport: 'Intense small-school prospect with high diagnostic speed. He plays with an infectious motor and is a reliable tackler who excels at filling gaps.' },
-  { id: 'p300', name: 'Elijah Pritchett', headshotUrl: getEspnUrl(4685519), college: 'Nebraska', position: 'OT', height: '6\'6"', weight: 312, rank: 300, collegeLogoUrl: getCollegeLogoUrl('Nebraska'), scoutingReport: 'Athletic offensive tackle with exceptional lateral movement and light feet. He is a technical tackle who uses his length effectively in pass protection.' },
+  { id: 'p300', name: 'Elijah Pritchett', headshotUrl: getEspnUrl(4685130), college: 'Nebraska', position: 'OT', height: '6\'6"', weight: 312, rank: 300, collegeLogoUrl: getCollegeLogoUrl('Nebraska'), scoutingReport: 'Athletic offensive tackle with exceptional lateral movement and light feet. He is a technical tackle who uses his length effectively in pass protection.' },
 ];

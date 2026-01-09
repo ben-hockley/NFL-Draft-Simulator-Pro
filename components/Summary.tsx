@@ -16,6 +16,8 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const graphicRef = useRef<HTMLDivElement>(null);
 
+  const scopePicks = useMemo(() => state.picks.filter(p => p.round <= state.roundsToSimulate), [state.picks, state.roundsToSimulate]);
+
   const bestAvailable = useMemo(() => {
     const draftedIds = state.picks.map(p => p.selectedPlayerId).filter(Boolean);
     return state.prospects
@@ -87,7 +89,7 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
                 : 'text-slate-500 hover:text-slate-300'
             }`}
           >
-            Draft Results ({state.picks.length})
+            Draft Results ({scopePicks.length})
           </button>
           <button
             onClick={() => setActiveTab('BEST_AVAILABLE')}
@@ -105,7 +107,7 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
         <div className="flex-1 min-h-0 overflow-y-auto bg-slate-950/20 p-2 lg:p-4">
           {activeTab === 'RESULTS' ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-1.5 lg:gap-2 content-start">
-              {state.picks.map((pick) => {
+              {scopePicks.map((pick) => {
                 const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
                 const isUserPick = state.userControlledTeams.includes(pick.team.id);
                 
@@ -113,7 +115,7 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
                   <button 
                     key={pick.pickNumber} 
                     onClick={() => player && onSelectProspect(player)}
-                    className={`flex flex-col p-2 rounded-lg border transition-all text-left group min-h-[70px] ${
+                    className={`flex flex-col p-2 rounded-lg border transition-all text-left group min-h-[70px] relative ${
                       isUserPick 
                         ? 'bg-emerald-500/10 border-emerald-500/40 hover:bg-emerald-500/20' 
                         : 'bg-slate-800/40 border-slate-800/60 hover:border-slate-600'
@@ -121,7 +123,16 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
                   >
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-[10px] font-black font-oswald text-slate-500">#{pick.pickNumber}</span>
-                      <img src={pick.team.logoUrl} alt="" className="w-4 h-4 object-contain" />
+                      <div className="flex items-center gap-1">
+                         {pick.isTraded && (
+                            /* Fix: Remove title prop from svg and use title tag for accessibility */
+                            <svg className="w-2.5 h-2.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <title>Traded Pick</title>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                            </svg>
+                         )}
+                         <img src={pick.team.logoUrl} alt="" className="w-4 h-4 object-contain" />
+                      </div>
                     </div>
                     
                     <div className="flex-1 min-w-0">
@@ -194,8 +205,13 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
               return (
                 <div key={pick.pickNumber} className="flex items-center gap-4 bg-slate-900/50 border border-slate-800 p-3 rounded-xl">
                   <span className="text-xl font-black font-oswald text-emerald-500 w-8">#{pick.pickNumber}</span>
-                  <div className="w-8 h-8 flex-shrink-0">
+                  <div className="w-8 h-8 flex-shrink-0 relative">
                     <img src={pick.team.logoUrl} className="w-full h-full object-contain" alt="" />
+                    {pick.isTraded && (
+                       <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5 border border-slate-900">
+                          <svg className="w-1.5 h-1.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                       </div>
+                    )}
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <div className="text-xs font-bold text-slate-100 truncate uppercase tracking-tight">{player?.name || 'TBD'}</div>

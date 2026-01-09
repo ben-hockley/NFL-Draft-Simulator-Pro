@@ -27,9 +27,17 @@ export interface DraftPick {
   round: number;
   team: Team;
   selectedPlayerId?: string;
+  isTraded?: boolean;
 }
 
 export type AppView = 'LOBBY' | 'DRAFT' | 'SUMMARY';
+
+export interface PickAsset {
+  year: 2026 | 2027;
+  round: number;
+  pickNumber?: number; // Only for 2026
+  value: number;
+}
 
 export interface DraftState {
   currentPickIndex: number;
@@ -38,4 +46,5 @@ export interface DraftState {
   isDraftStarted: boolean;
   prospects: Prospect[];
   roundsToSimulate: number;
+  futurePicks: Record<string, number[]>; // TeamID to array of Round numbers (2027)
 }
