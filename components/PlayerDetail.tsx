@@ -50,6 +50,9 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
         if (cat.name === 'general') {
           const gp = cat.stats.find((s: any) => s.name === 'gamesPlayed');
           if (gp) parsedStats.gamesPlayed = gp.value;
+          // Mapping fumblesForced from general category as requested
+          const ff = cat.stats.find((s: any) => s.name === 'fumblesForced');
+          if (ff) parsedStats.forcedFumbles = ff.value;
         }
         if (cat.name === 'passing') {
           parsedStats.passingYards = cat.stats.find((s: any) => s.name === 'passingYards')?.value;
@@ -69,7 +72,6 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
         if (cat.name === 'defensive') {
           parsedStats.tackles = cat.stats.find((s: any) => s.name === 'totalTackles')?.value;
           parsedStats.sacks = cat.stats.find((s: any) => s.name === 'sacks')?.value;
-          parsedStats.tfl = cat.stats.find((s: any) => s.name === 'tacklesForLoss')?.value;
         }
         if (cat.name === 'defensiveInterceptions') {
           parsedStats.defInts = cat.stats.find((s: any) => s.name === 'interceptions')?.value;
@@ -109,7 +111,7 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
     if (!stats || stats.gamesPlayed === 0) {
       return (
         <div className="bg-slate-800/30 border border-slate-700/50 p-4 rounded-xl text-center">
-          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">No 2025 Postseason Stats Available</p>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">No Stats Available</p>
         </div>
       );
     }
@@ -134,7 +136,7 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
     } else if (['DL', 'EDGE', 'LB', 'CB', 'S'].includes(prospect.position)) {
       statBoxes.push({ label: 'Tkl', value: stats.tackles || 0 });
       statBoxes.push({ label: 'Sacks', value: stats.sacks || 0 });
-      statBoxes.push({ label: 'TFL', value: stats.tfl || 0 });
+      statBoxes.push({ label: 'FF', value: stats.forcedFumbles || 0 });
       statBoxes.push({ label: 'INT', value: stats.defInts || 0 });
     }
 
@@ -196,14 +198,14 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
           <div className="w-full md:w-1/2 p-5 md:p-10 flex flex-col">
             <div className="mb-6 md:mb-8 flex justify-between items-start">
               <div>
-                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">2025 Live College Stats</h3>
+                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">CFB Stats: 2025/26 Season</h3>
               </div>
               {onCompare && !completedPick && (
                 <button 
                   onClick={onCompare}
                   className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-2"
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                   Compare
                 </button>
               )}

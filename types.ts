@@ -1,6 +1,8 @@
 
 export type Position = 'QB' | 'RB' | 'WR' | 'TE' | 'OT' | 'OG' | 'C' | 'DE' | 'DT' | 'LB' | 'CB' | 'S' | 'K' | 'P' | 'IOL' | 'DL' | 'EDGE';
 
+export type DraftSpeed = 'SLOW' | 'MEDIUM' | 'FAST';
+
 export interface PlayerStats {
   gamesPlayed: number;
   passingYards?: number;
@@ -15,7 +17,7 @@ export interface PlayerStats {
   tackles?: number;
   sacks?: number;
   defInts?: number;
-  tfl?: number;
+  forcedFumbles?: number;
 }
 
 export interface Prospect {
@@ -65,5 +67,6 @@ export interface DraftState {
   isDraftStarted: boolean;
   prospects: Prospect[];
   roundsToSimulate: number;
+  draftSpeed: DraftSpeed;
   futurePicks: Record<string, number[]>; // TeamID to array of Round numbers (2027)
 }

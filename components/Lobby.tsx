@@ -2,13 +2,15 @@
 import React, { useState } from 'react';
 import { TEAMS } from '../constants';
 import { Button } from './Button';
-import { Team } from '../types';
+import { Team, DraftSpeed } from '../types';
 
 interface LobbyProps {
   userControlledTeams: string[];
   setUserControlledTeams: (ids: string[]) => void;
   roundsToSimulate: number;
   setRoundsToSimulate: (num: number) => void;
+  draftSpeed: DraftSpeed;
+  setDraftSpeed: (speed: DraftSpeed) => void;
   onStart: () => void;
 }
 
@@ -17,6 +19,8 @@ export const Lobby: React.FC<LobbyProps> = ({
   setUserControlledTeams, 
   roundsToSimulate,
   setRoundsToSimulate,
+  draftSpeed,
+  setDraftSpeed,
   onStart 
 }) => {
   const toggleTeam = (teamId: string) => {
@@ -35,33 +39,61 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Header Section - Compact and Fixed */}
       <header className="text-center py-3 lg:py-6 shrink-0 bg-slate-900/30 border-b border-slate-800/50">
         <h1 className="text-2xl lg:text-4xl font-black font-oswald text-emerald-400 uppercase tracking-tight">
-          Draft Simulator Pro
+          2026 NFL Draft Simulator
         </h1>
         <p className="text-slate-400 text-[10px] lg:text-sm">
-          Select the team(s) you wish to control for the 2026 NFL Draft.
+          Select the team(s) you wish to control
         </p>
       </header>
 
       {/* Main Selection Area - Scrollable */}
       <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-thin scrollbar-thumb-slate-700">
         <div className="max-w-5xl mx-auto">
-          {/* Rounds Selection */}
-          <div className="mb-6 p-4 bg-slate-900/50 rounded-2xl border border-slate-800/60">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Draft Length</h3>
-            <div className="flex gap-2 flex-wrap">
-              {[1, 2, 3, 4, 5, 6, 7].map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRoundsToSimulate(r)}
-                  className={`flex-1 min-w-[60px] py-3 px-4 rounded-xl border font-oswald text-lg transition-all ${
-                    roundsToSimulate === r
-                      ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]'
-                      : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'
-                  }`}
-                >
-                  {r} {r === 1 ? 'RD' : 'RDS'}
-                </button>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Rounds Selection */}
+            <div className="p-4 bg-slate-900/50 rounded-2xl border border-slate-800/60">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Draft Length (Rounds)
+              </h3>
+              <div className="flex gap-2 flex-wrap">
+                {[1, 2, 3, 4, 5, 6, 7].map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setRoundsToSimulate(r)}
+                    className={`flex-1 min-w-[45px] py-2 px-3 rounded-xl border font-oswald text-lg transition-all ${
+                      roundsToSimulate === r
+                        ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                        : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Speed Selection */}
+            <div className="p-4 bg-slate-900/50 rounded-2xl border border-slate-800/60">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                Draft Speed
+              </h3>
+              <div className="flex gap-2">
+                {(['SLOW', 'MEDIUM', 'FAST'] as DraftSpeed[]).map((speed) => (
+                  <button
+                    key={speed}
+                    onClick={() => setDraftSpeed(speed)}
+                    className={`flex-1 py-2 px-4 rounded-xl border font-black text-[10px] tracking-widest transition-all uppercase ${
+                      draftSpeed === speed
+                        ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                        : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'
+                    }`}
+                  >
+                    {speed}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -150,7 +182,7 @@ export const Lobby: React.FC<LobbyProps> = ({
               </p>
             ) : (
               <p className="text-slate-500 text-[10px] lg:text-xs font-bold uppercase tracking-[0.2em] opacity-80">
-                Drafting as {userControlledTeams.length} {userControlledTeams.length === 1 ? 'Team' : 'Teams'}
+                Drafting as {userControlledTeams.length} {userControlledTeams.length === 1 ? 'Team' : 'Teams'} &bull; {draftSpeed} Speed
               </p>
             )}
           </div>
