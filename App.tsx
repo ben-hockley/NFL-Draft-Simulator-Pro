@@ -7,6 +7,7 @@ import { DraftBoard } from './components/DraftBoard';
 import { PlayerDetail } from './components/PlayerDetail';
 import { Summary } from './components/Summary';
 import { TradeModal } from './components/TradeModal';
+import { PlayerComparison } from './components/PlayerComparison';
 import { Button } from './components/Button';
 
 const App: React.FC = () => {
@@ -17,6 +18,7 @@ const App: React.FC = () => {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isSelectingTradeTeam, setIsSelectingTradeTeam] = useState(false);
   const [activeTradingTeamId, setActiveTradingTeamId] = useState<string | null>(null);
+  const [comparisonBasePlayer, setComparisonBasePlayer] = useState<Prospect | null>(null);
 
   const [state, setState] = useState<DraftState>({
     currentPickIndex: 0,
@@ -31,10 +33,7 @@ const App: React.FC = () => {
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
 
   const startDraft = () => {
-    // Keep ALL 7 rounds for trading purposes, but simulation logic will stop at roundsToSimulate
     const allPicks = INITIAL_DRAFT_ORDER;
-    
-    // Initialize future picks for everyone
     const futurePicks: Record<string, number[]> = {};
     TEAMS.forEach(t => {
       futurePicks[t.id] = [1, 2, 3, 4, 5, 6, 7];
@@ -57,6 +56,7 @@ const App: React.FC = () => {
     setView('LOBBY');
     setUserControlledTeams([]);
     setSelectedProspectId(null);
+    setComparisonBasePlayer(null);
     setIsSimulationPaused(false);
     setIsSelectingTradeTeam(false);
     setActiveTradingTeamId(null);
@@ -73,12 +73,10 @@ const App: React.FC = () => {
 
   const handleDraftPlayer = useCallback((prospect: Prospect) => {
     setState(prev => {
-      // Find the next available pick within the rounds we're simulating
       const picksInScope = prev.picks.filter(p => p.round <= prev.roundsToSimulate);
       if (prev.currentPickIndex >= picksInScope.length) return prev;
       
       const newPicks = [...prev.picks];
-      // Get the actual pick based on simulation index
       const pickToUpdate = picksInScope[prev.currentPickIndex];
       const actualIdx = newPicks.findIndex(p => p.pickNumber === pickToUpdate.pickNumber);
 
@@ -90,7 +88,6 @@ const App: React.FC = () => {
       }
 
       const nextIndex = prev.currentPickIndex + 1;
-      
       return {
         ...prev,
         currentPickIndex: nextIndex,
@@ -98,6 +95,7 @@ const App: React.FC = () => {
       };
     });
     setSelectedProspectId(null);
+    setComparisonBasePlayer(null);
   }, []);
 
   const handleTrade = (userAssets: PickAsset[], cpuAssets: PickAsset[], targetTeamId: string, initiatorId: string) => {
@@ -107,7 +105,6 @@ const App: React.FC = () => {
       const cpuTeam = TEAMS.find(t => t.id === targetTeamId)!;
       const userTeam = TEAMS.find(t => t.id === initiatorId)!;
 
-      // Swap 2026 Picks
       userAssets.filter(a => a.year === 2026).forEach(asset => {
         const idx = newPicks.findIndex(p => p.pickNumber === asset.pickNumber);
         if (idx !== -1) newPicks[idx] = { ...newPicks[idx], team: cpuTeam, isTraded: true };
@@ -117,7 +114,6 @@ const App: React.FC = () => {
         if (idx !== -1) newPicks[idx] = { ...newPicks[idx], team: userTeam, isTraded: true };
       });
 
-      // Swap 2027 Picks
       userAssets.filter(a => a.year === 2027).forEach(asset => {
         newFuturePicks[initiatorId] = newFuturePicks[initiatorId].filter(r => r !== asset.round);
         newFuturePicks[targetTeamId] = [...newFuturePicks[targetTeamId], asset.round];
@@ -139,7 +135,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const picksInScope = state.picks.filter(p => p.round <= state.roundsToSimulate);
-
     if (view !== 'DRAFT' || state.currentPickIndex >= picksInScope.length || isSimulationPaused) {
       if (state.currentPickIndex >= picksInScope.length && state.isDraftStarted && view === 'DRAFT') {
          setView('SUMMARY');
@@ -173,9 +168,7 @@ const App: React.FC = () => {
           const remainingNeeds = teamNeeds.filter(need => !draftedPositionsByTeam.includes(need));
           let candidateProspects = available.filter(p => remainingNeeds.includes(p.position));
           
-          if (candidateProspects.length === 0) {
-            candidateProspects = available;
-          }
+          if (candidateProspects.length === 0) candidateProspects = available;
 
           const topCandidates = candidateProspects.slice(0, 4);
           const weights = [50, 30, 20, 10].slice(0, topCandidates.length);
@@ -214,7 +207,6 @@ const App: React.FC = () => {
   const fulfilledNeeds = useMemo(() => {
     if (!currentPick) return new Set<string>();
     const teamId = currentPick.team.id;
-    // Look through ALL picks made by this team in the 2026 draft so far
     const draftedPositionsByTeam = state.picks
       .filter(p => p.team.id === teamId && p.selectedPlayerId)
       .map(p => {
@@ -280,7 +272,6 @@ const App: React.FC = () => {
                         ))}
                       </div>
                       
-                      {/* Team Needs Display for Desktop */}
                       <div className="hidden xl:flex items-center gap-2 ml-4">
                         <span className="text-[9px] font-black text-slate-600 uppercase shrink-0">Needs:</span>
                         <div className="flex gap-1">
@@ -308,18 +299,6 @@ const App: React.FC = () => {
                         <span className="text-[8px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                           {isSimulationPaused ? 'PAUSED' : (state.userControlledTeams.includes(currentPick.team.id) ? 'Your Turn' : 'CPU')}
                         </span>
-                      </div>
-                      
-                      {/* Sub-line Needs for Large Screens */}
-                      <div className="hidden lg:flex xl:hidden items-center gap-2">
-                         <span className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter shrink-0">Team Needs:</span>
-                         <div className="flex gap-1 overflow-hidden">
-                            {currentPick.team.needs.map(need => (
-                              <span key={need} className={`text-[8px] font-bold uppercase ${fulfilledNeeds.has(need) ? 'text-slate-600 line-through' : 'text-slate-400'}`}>
-                                {need}
-                              </span>
-                            ))}
-                         </div>
                       </div>
                     </div>
                   </div>
@@ -403,6 +382,19 @@ const App: React.FC = () => {
             onDraft={handleDraftPlayer}
             onClose={() => setSelectedProspectId(null)}
             completedPick={selectionInfo || undefined}
+            onCompare={() => {
+              setComparisonBasePlayer(selectedProspect);
+              setSelectedProspectId(null);
+            }}
+          />
+        )}
+
+        {comparisonBasePlayer && (
+          <PlayerComparison 
+            basePlayer={comparisonBasePlayer}
+            onClose={() => setComparisonBasePlayer(null)}
+            onDraft={handleDraftPlayer}
+            isUserTurn={view === 'DRAFT' && !!currentPick && state.userControlledTeams.includes(currentPick.team.id)}
           />
         )}
 

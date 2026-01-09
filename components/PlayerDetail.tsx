@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { Prospect, Team } from '../types';
+
+import React, { useMemo, useEffect, useState } from 'react';
+import { Prospect, Team, PlayerStats } from '../types';
 import { Button } from './Button';
 import { PROSPECTS } from '../constants';
 
@@ -9,6 +10,7 @@ interface PlayerDetailProps {
   isUserTurn?: boolean;
   onDraft: (prospect: Prospect) => void;
   onClose: () => void;
+  onCompare?: () => void;
   completedPick?: { team: Team; pickNumber: number };
 }
 
@@ -18,8 +20,70 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
   isUserTurn, 
   onDraft,
   onClose,
+  onCompare,
   completedPick
 }) => {
+  const [stats, setStats] = useState<PlayerStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    if (prospect) {
+      setStats(null);
+      fetchStats(prospect.espnId);
+    }
+  }, [prospect]);
+
+  const fetchStats = async (espnId: number) => {
+    setLoadingStats(true);
+    try {
+      const response = await fetch(`https://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2025/types/3/athletes/${espnId}/statistics/0`);
+      if (!response.ok) throw new Error('Stats not found');
+      
+      const data = await response.json();
+      const categories = data.splits.categories;
+      
+      const parsedStats: PlayerStats = {
+        gamesPlayed: 0
+      };
+
+      categories.forEach((cat: any) => {
+        if (cat.name === 'general') {
+          const gp = cat.stats.find((s: any) => s.name === 'gamesPlayed');
+          if (gp) parsedStats.gamesPlayed = gp.value;
+        }
+        if (cat.name === 'passing') {
+          parsedStats.passingYards = cat.stats.find((s: any) => s.name === 'passingYards')?.value;
+          parsedStats.passingTDs = cat.stats.find((s: any) => s.name === 'passingTouchdowns')?.value;
+          parsedStats.ints = cat.stats.find((s: any) => s.name === 'interceptions')?.value;
+          parsedStats.completionPct = cat.stats.find((s: any) => s.name === 'completionPct')?.displayValue;
+        }
+        if (cat.name === 'rushing') {
+          parsedStats.rushingYards = cat.stats.find((s: any) => s.name === 'rushingYards')?.value;
+          parsedStats.rushingTDs = cat.stats.find((s: any) => s.name === 'rushingTouchdowns')?.value;
+        }
+        if (cat.name === 'receiving') {
+          parsedStats.receptions = cat.stats.find((s: any) => s.name === 'receptions')?.value;
+          parsedStats.receivingYards = cat.stats.find((s: any) => s.name === 'receivingYards')?.value;
+          parsedStats.receivingTDs = cat.stats.find((s: any) => s.name === 'receivingTouchdowns')?.value;
+        }
+        if (cat.name === 'defensive') {
+          parsedStats.tackles = cat.stats.find((s: any) => s.name === 'totalTackles')?.value;
+          parsedStats.sacks = cat.stats.find((s: any) => s.name === 'sacks')?.value;
+          parsedStats.tfl = cat.stats.find((s: any) => s.name === 'tacklesForLoss')?.value;
+        }
+        if (cat.name === 'defensiveInterceptions') {
+          parsedStats.defInts = cat.stats.find((s: any) => s.name === 'interceptions')?.value;
+        }
+      });
+
+      setStats(parsedStats);
+    } catch (err) {
+      setStats({ gamesPlayed: 0 });
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   const positionRank = useMemo(() => {
     if (!prospect) return 0;
     const posProspects = PROSPECTS
@@ -29,6 +93,62 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
   }, [prospect]);
 
   if (!prospect) return null;
+
+  const renderStats = () => {
+    if (loadingStats) {
+      return (
+        <div className="flex items-center gap-2 text-slate-500 animate-pulse py-4">
+          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span className="text-[10px] font-bold uppercase tracking-widest">Loading Live Stats...</span>
+        </div>
+      );
+    }
+
+    if (!stats || stats.gamesPlayed === 0) {
+      return (
+        <div className="bg-slate-800/30 border border-slate-700/50 p-4 rounded-xl text-center">
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">No 2025 Postseason Stats Available</p>
+        </div>
+      );
+    }
+
+    const statBoxes = [];
+    statBoxes.push({ label: 'GP', value: stats.gamesPlayed });
+
+    if (prospect.position === 'QB') {
+      statBoxes.push({ label: 'Pass Yds', value: stats.passingYards?.toLocaleString() || 0 });
+      statBoxes.push({ label: 'TD/INT', value: `${stats.passingTDs || 0}/${stats.ints || 0}` });
+      statBoxes.push({ label: 'CMP%', value: stats.completionPct || '0%' });
+      statBoxes.push({ label: 'Rush Yds', value: stats.rushingYards?.toLocaleString() || 0 });
+    } else if (prospect.position === 'RB') {
+      statBoxes.push({ label: 'Rush Yds', value: stats.rushingYards?.toLocaleString() || 0 });
+      statBoxes.push({ label: 'Rush TD', value: stats.rushingTDs || 0 });
+      statBoxes.push({ label: 'Rec', value: stats.receptions || 0 });
+      statBoxes.push({ label: 'Rec Yds', value: stats.receivingYards?.toLocaleString() || 0 });
+    } else if (['WR', 'TE'].includes(prospect.position)) {
+      statBoxes.push({ label: 'Rec', value: stats.receptions || 0 });
+      statBoxes.push({ label: 'Rec Yds', value: stats.receivingYards?.toLocaleString() || 0 });
+      statBoxes.push({ label: 'TD', value: stats.receivingTDs || 0 });
+    } else if (['DL', 'EDGE', 'LB', 'CB', 'S'].includes(prospect.position)) {
+      statBoxes.push({ label: 'Tkl', value: stats.tackles || 0 });
+      statBoxes.push({ label: 'Sacks', value: stats.sacks || 0 });
+      statBoxes.push({ label: 'TFL', value: stats.tfl || 0 });
+      statBoxes.push({ label: 'INT', value: stats.defInts || 0 });
+    }
+
+    return (
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+        {statBoxes.map((box, i) => (
+          <div key={i} className="bg-slate-800/50 border border-slate-700 p-2 rounded-lg text-center">
+            <span className="block text-[8px] font-bold text-slate-500 uppercase leading-none mb-1">{box.label}</span>
+            <span className="text-sm font-black font-oswald text-emerald-400">{box.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
@@ -43,7 +163,6 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
         </button>
 
         <div className="flex flex-col md:flex-row">
-          {/* Visual Side */}
           <div className="w-full md:w-1/2 bg-slate-800 relative h-[250px] md:h-auto md:min-h-[450px] shrink-0">
             <img 
               src={prospect.headshotUrl} 
@@ -74,10 +193,25 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
             </div>
           </div>
 
-          {/* Info Side */}
           <div className="w-full md:w-1/2 p-5 md:p-10 flex flex-col">
-            <div className="mb-6 md:mb-8">
-              <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">Prospect Profile</h3>
+            <div className="mb-6 md:mb-8 flex justify-between items-start">
+              <div>
+                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">2025 Live College Stats</h3>
+              </div>
+              {onCompare && !completedPick && (
+                <button 
+                  onClick={onCompare}
+                  className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-2"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                  Compare
+                </button>
+              )}
+            </div>
+            {renderStats()}
+
+            <div className="my-6 md:my-8">
+              <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">Physical Measurements</h3>
               <div className="grid grid-cols-2 gap-4 md:gap-6">
                 <div className="bg-slate-800/50 p-3 md:p-4 rounded-xl border border-slate-700">
                   <span className="block text-[9px] md:text-[10px] font-bold text-slate-500 uppercase mb-0.5 md:mb-1">Height</span>
@@ -94,9 +228,6 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
               <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">Scouting Summary</h3>
               <p className="text-slate-200 text-sm md:text-base leading-relaxed font-medium">
                 {prospect.scoutingReport}
-              </p>
-              <p className="text-slate-500 text-[10px] mt-2 md:mt-4 italic">
-                Source: 2026 Gridiron Pro Scouting Network
               </p>
             </div>
 

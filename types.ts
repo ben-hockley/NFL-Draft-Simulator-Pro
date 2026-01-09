@@ -1,8 +1,26 @@
 
 export type Position = 'QB' | 'RB' | 'WR' | 'TE' | 'OT' | 'OG' | 'C' | 'DE' | 'DT' | 'LB' | 'CB' | 'S' | 'K' | 'P' | 'IOL' | 'DL' | 'EDGE';
 
+export interface PlayerStats {
+  gamesPlayed: number;
+  passingYards?: number;
+  passingTDs?: number;
+  ints?: number;
+  completionPct?: string;
+  rushingYards?: number;
+  rushingTDs?: number;
+  receptions?: number;
+  receivingYards?: number;
+  receivingTDs?: number;
+  tackles?: number;
+  sacks?: number;
+  defInts?: number;
+  tfl?: number;
+}
+
 export interface Prospect {
   id: string;
+  espnId: number;
   name: string;
   headshotUrl: string;
   college: string;
@@ -12,6 +30,7 @@ export interface Prospect {
   weight: number;
   rank: number;
   scoutingReport?: string;
+  stats?: PlayerStats;
 }
 
 export interface Team {
