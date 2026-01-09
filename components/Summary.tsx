@@ -290,7 +290,6 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
         style={{ minHeight: '1300px' }}
       >
         <div className="border-[8px] border-emerald-500 h-full p-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           <header className="mb-12 border-b-2 border-emerald-500/50 pb-8 flex justify-between items-end">
             <div>
               <h1 className="text-6xl font-black font-oswald italic uppercase tracking-tighter text-emerald-500">2026 DRAFT</h1>
@@ -332,11 +331,6 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
         className="absolute top-0 left-[-9999px] w-[800px] bg-slate-950 p-12 text-white font-inter"
       >
         <div className="border-[8px] border-slate-800 h-full p-8 relative overflow-hidden bg-[#0a0f1d]">
-          <div 
-            className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full blur-[120px] opacity-20"
-            style={{ backgroundColor: selectedTeamData?.color || '#10b981' }}
-          ></div>
-          
           <header className="mb-12 flex items-center justify-between border-b-4 border-slate-800 pb-10">
             <div className="flex items-center gap-6">
               <img src={selectedTeamData?.logoUrl} className="w-24 h-24 object-contain" alt="" />
