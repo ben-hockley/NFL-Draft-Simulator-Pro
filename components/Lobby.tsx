@@ -48,18 +48,18 @@ export const Lobby: React.FC<LobbyProps> = ({
           {/* Rounds Selection */}
           <div className="mb-6 p-4 bg-slate-900/50 rounded-2xl border border-slate-800/60">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Draft Length</h3>
-            <div className="flex gap-2">
-              {[1, 2, 3].map((r) => (
+            <div className="flex gap-2 flex-wrap">
+              {[1, 2, 3, 4, 5, 6, 7].map((r) => (
                 <button
                   key={r}
                   onClick={() => setRoundsToSimulate(r)}
-                  className={`flex-1 py-3 px-4 rounded-xl border font-oswald text-lg transition-all ${
+                  className={`flex-1 min-w-[60px] py-3 px-4 rounded-xl border font-oswald text-lg transition-all ${
                     roundsToSimulate === r
                       ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]'
                       : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'
                   }`}
                 >
-                  {r} {r === 1 ? 'ROUND' : 'ROUNDS'}
+                  {r} {r === 1 ? 'RD' : 'RDS'}
                 </button>
               ))}
             </div>

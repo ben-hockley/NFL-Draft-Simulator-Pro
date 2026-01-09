@@ -1,6 +1,8 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { DraftState, Prospect, Position } from '../types';
 import { Button } from './Button';
+import { TEAMS } from '../constants';
 
 interface DraftBoardProps {
   state: DraftState;
@@ -9,7 +11,7 @@ interface DraftBoardProps {
   selectedProspectId: string | null;
 }
 
-const POSITIONS: Position[] = ['QB', 'RB', 'WR', 'TE', 'OT', 'OG', 'C', 'DE', 'DT', 'LB', 'CB', 'S'];
+const POSITIONS: Position[] = ['QB', 'RB', 'WR', 'TE', 'OT', 'IOL', 'EDGE', 'DL', 'LB', 'CB', 'S'];
 
 type BoardTab = 'PROSPECTS' | 'TRACKER';
 
@@ -20,6 +22,8 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   selectedProspectId
 }) => {
   const [filter, setFilter] = useState<Position | 'ALL'>('ALL');
+  const [collegeFilter, setCollegeFilter] = useState<string>('ALL');
+  const [teamTrackerFilter, setTeamTrackerFilter] = useState<string>('ALL');
   const [activeTab, setActiveTab] = useState<BoardTab>('PROSPECTS');
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -36,10 +40,26 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
     [state.prospects, draftedPlayerIds]
   );
 
-  const filteredProspects = useMemo(() => 
-    filter === 'ALL' ? availableProspects : availableProspects.filter(p => p.position === filter),
-    [availableProspects, filter]
-  );
+  const uniqueColleges = useMemo(() => {
+    const colleges = Array.from(new Set(state.prospects.map(p => p.college)));
+    return colleges.sort();
+  }, [state.prospects]);
+
+  const filteredProspects = useMemo(() => {
+    let list = availableProspects;
+    if (filter !== 'ALL') {
+      list = list.filter(p => p.position === filter);
+    }
+    if (collegeFilter !== 'ALL') {
+      list = list.filter(p => p.college === collegeFilter);
+    }
+    return list;
+  }, [availableProspects, filter, collegeFilter]);
+
+  const filteredTrackerPicks = useMemo(() => {
+    if (teamTrackerFilter === 'ALL') return state.picks;
+    return state.picks.filter(p => p.team.id === teamTrackerFilter);
+  }, [state.picks, teamTrackerFilter]);
 
   // Helper to calculate position rank based on all prospects
   const getPositionRank = (prospect: Prospect) => {
@@ -52,13 +72,13 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
 
   // Auto-scroll the Draft Log to the current pick
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && teamTrackerFilter === 'ALL') {
       const currentItem = scrollRef.current.querySelector(`[data-pick-index="${state.currentPickIndex}"]`);
       if (currentItem) {
         currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
-  }, [state.currentPickIndex]);
+  }, [state.currentPickIndex, teamTrackerFilter]);
 
   return (
     <div className="flex flex-col gap-2 p-2 lg:p-3 h-full overflow-hidden">
@@ -101,19 +121,31 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                 <span className="w-1.5 h-5 bg-emerald-500 rounded-sm"></span>
                 Prospect Big Board
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono">
-                {availableProspects.length} REMAINING
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+                  {availableProspects.length} REMAINING
+                </span>
+                <select 
+                  value={collegeFilter}
+                  onChange={(e) => setCollegeFilter(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-bold py-1 px-2 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 uppercase tracking-tighter"
+                >
+                  <option value="ALL">All Colleges</option>
+                  {uniqueColleges.map(college => (
+                    <option key={college} value={college}>{college}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
-            <div className="flex flex-wrap gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex flex-wrap gap-1.5 overflow-x-auto pb-1 no-scrollbar scrollbar-none">
               <button
                 onClick={() => setFilter('ALL')}
                 className={`px-2.5 py-0.5 text-[9px] font-bold rounded-full transition-colors whitespace-nowrap ${
                   filter === 'ALL' ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                 }`}
               >
-                ALL
+                ALL POSITIONS
               </button>
               {POSITIONS.map(pos => (
                 <button
@@ -136,7 +168,6 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                   <th className="px-4 py-2.5 w-14 lg:w-16">RK</th>
                   <th className="px-4 py-2.5 w-40 lg:w-48">PLAYER</th>
                   <th className="px-4 py-2.5 w-28 lg:w-32">POS (RANK)</th>
-                  <th className="px-4 py-2.5 w-48 hidden xl:table-cell">SCOUTING REPORT</th>
                   <th className="px-4 py-2.5 w-28 lg:w-32">SCHOOL</th>
                   <th className="px-4 py-2.5 text-right w-24">ACTION</th>
                 </tr>
@@ -161,18 +192,13 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
-                        <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-emerald-400 inline-block w-fit">
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-emerald-400 inline-block w-fit uppercase">
                           {prospect.position}
                         </span>
                         <span className="text-[9px] font-black text-slate-500 uppercase mt-1">
                           #{getPositionRank(prospect)} {prospect.position}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 py-3 hidden xl:table-cell">
-                      <p className="text-[11px] text-slate-500 italic line-clamp-1 leading-relaxed">
-                        {prospect.scoutingReport}
-                      </p>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -200,7 +226,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
             </table>
             {filteredProspects.length === 0 && (
               <div className="py-20 text-center text-slate-500">
-                No prospects found matching that position.
+                No prospects found matching these filters.
               </div>
             )}
           </div>
@@ -211,74 +237,108 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
           activeTab === 'TRACKER' ? 'flex' : 'hidden'
         }`}>
           <div className="p-3 border-b border-slate-800 bg-slate-800/50">
-            <h3 className="text-base font-bold font-oswald uppercase text-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-5 bg-slate-500 rounded-sm"></span>
-              Draft Tracker
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold font-oswald uppercase text-slate-100 flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-slate-500 rounded-sm"></span>
+                Draft Tracker
+              </h3>
+              <select 
+                value={teamTrackerFilter}
+                onChange={(e) => setTeamTrackerFilter(e.target.value)}
+                className="bg-slate-800 border border-slate-700 text-slate-200 text-[9px] font-bold py-1 px-1.5 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 uppercase tracking-tighter max-w-[100px]"
+              >
+                <option value="ALL">All Teams</option>
+                {TEAMS.map(team => (
+                  <option key={team.id} value={team.id}>{team.id}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto scroll-smooth" ref={scrollRef}>
             <div className="p-3 space-y-1.5">
-              {state.picks.map((pick, index) => {
+              {filteredTrackerPicks.map((pick, index) => {
                 const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
-                const isCurrent = index === state.currentPickIndex;
+                // Find actual index in original picks array for auto-scroll and turn tracking
+                const originalIndex = state.picks.findIndex(p => p.pickNumber === pick.pickNumber);
+                const isCurrent = originalIndex === state.currentPickIndex;
                 const isCompleted = !!pick.selectedPlayerId;
 
-                return (
-                  <div 
-                    key={pick.pickNumber}
-                    data-pick-index={index}
-                    className={`w-full flex gap-3 items-start p-2 rounded-lg transition-all border ${
-                      isCurrent 
-                        ? 'bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/20' 
-                        : isCompleted
-                          ? 'bg-slate-800/20 border-transparent opacity-80'
-                          : 'bg-slate-800/40 border-slate-800/50 opacity-60'
-                    } ${player ? 'cursor-pointer hover:bg-white/5' : ''}`}
-                    onClick={() => player && onSelectProspect(player)}
-                  >
-                    <div className={`flex-shrink-0 w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold transition-colors ${
-                      isCurrent ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-800 text-slate-500'
-                    }`}>
-                      {pick.pickNumber}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <img src={pick.team.logoUrl} className="w-3 h-3" alt="" />
-                        <span className={`text-[9px] font-bold uppercase truncate ${isCurrent ? 'text-emerald-400' : 'text-slate-500'}`}>
-                          {pick.team.name}
-                        </span>
-                      </div>
+                // Check for round transition
+                const showRoundSeparator = index === 0 || filteredTrackerPicks[index - 1].round !== pick.round;
 
-                      <div className="flex justify-between items-center gap-2">
-                        <div className="flex flex-col min-w-0">
-                          {isCompleted ? (
-                            <>
-                              <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-400 transition-colors truncate">
-                                {player?.name}
+                return (
+                  <React.Fragment key={pick.pickNumber}>
+                    {showRoundSeparator && (
+                      <div className="pt-4 pb-2 first:pt-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-[1px] flex-1 bg-slate-800"></div>
+                          <span className="text-[10px] font-black font-oswald uppercase tracking-[0.2em] text-emerald-500/80 bg-slate-900 px-2 py-0.5 border border-slate-800 rounded">
+                            Round {pick.round}
+                          </span>
+                          <div className="h-[1px] flex-1 bg-slate-800"></div>
+                        </div>
+                      </div>
+                    )}
+                    <div 
+                      data-pick-index={originalIndex}
+                      className={`w-full flex gap-3 items-start p-2 rounded-lg transition-all border ${
+                        isCurrent 
+                          ? 'bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/20' 
+                          : isCompleted
+                            ? 'bg-slate-800/20 border-transparent opacity-80'
+                            : 'bg-slate-800/40 border-slate-800/50 opacity-60'
+                      } ${player ? 'cursor-pointer hover:bg-white/5' : ''}`}
+                      onClick={() => player && onSelectProspect(player)}
+                    >
+                      <div className={`flex-shrink-0 w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold transition-colors ${
+                        isCurrent ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-800 text-slate-500'
+                      }`}>
+                        {pick.pickNumber}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <img src={pick.team.logoUrl} className="w-3 h-3" alt="" />
+                          <span className={`text-[9px] font-bold uppercase truncate ${isCurrent ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            {pick.team.name}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center gap-2">
+                          <div className="flex flex-col min-w-0">
+                            {isCompleted ? (
+                              <>
+                                <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-400 transition-colors truncate">
+                                  {player?.name}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <img src={player?.collegeLogoUrl} className="w-2.5 h-2.5 object-contain" alt="" />
+                                  <span className="text-[9px] text-slate-500 truncate">{player?.college}</span>
+                                </div>
+                              </>
+                            ) : (
+                              <span className={`text-xs font-bold uppercase tracking-widest ${isCurrent ? 'text-emerald-400 animate-pulse' : 'text-slate-600'}`}>
+                                {isCurrent ? 'On The Clock' : 'Upcoming'}
                               </span>
-                              <div className="flex items-center gap-1">
-                                <img src={player?.collegeLogoUrl} className="w-2.5 h-2.5 object-contain" alt="" />
-                                <span className="text-[9px] text-slate-500 truncate">{player?.college}</span>
-                              </div>
-                            </>
-                          ) : (
-                            <span className={`text-xs font-bold uppercase tracking-widest ${isCurrent ? 'text-emerald-400 animate-pulse' : 'text-slate-600'}`}>
-                              {isCurrent ? 'On The Clock' : 'Upcoming'}
+                            )}
+                          </div>
+                          
+                          {isCompleted && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded shrink-0 uppercase">
+                              {player?.position}
                             </span>
                           )}
                         </div>
-                        
-                        {isCompleted && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded shrink-0">
-                            {player?.position}
-                          </span>
-                        )}
                       </div>
                     </div>
-                  </div>
+                  </React.Fragment>
                 );
               })}
+              {filteredTrackerPicks.length === 0 && (
+                <div className="py-10 text-center text-[10px] font-bold uppercase text-slate-600 tracking-widest">
+                  No picks for this team
+                </div>
+              )}
             </div>
           </div>
         </div>
