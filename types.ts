@@ -28,8 +28,8 @@ export interface Prospect {
   college: string;
   collegeLogoUrl: string;
   position: string;
-  height: string;
-  weight: number;
+  height?: string;
+  weight?: string;
   rank: number;
   scoutingReport?: string;
   stats?: PlayerStats;

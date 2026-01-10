@@ -24,14 +24,45 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
   completedPick
 }) => {
   const [stats, setStats] = useState<PlayerStats | null>(null);
+  const [physicalInfo, setPhysicalInfo] = useState<{ height: string; weight: string } | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingPhysical, setLoadingPhysical] = useState(false);
+
+  const isOffensiveLineman = useMemo(() => {
+    return prospect ? ['OT', 'IOL', 'OG', 'C'].includes(prospect.position) : false;
+  }, [prospect]);
 
   useEffect(() => {
     if (prospect) {
       setStats(null);
-      fetchStats(prospect.espnId);
+      setPhysicalInfo(null);
+      fetchPhysicalInfo(prospect.espnId);
+      if (!isOffensiveLineman) {
+        fetchStats(prospect.espnId);
+      }
     }
-  }, [prospect]);
+  }, [prospect, isOffensiveLineman]);
+
+  const fetchPhysicalInfo = async (espnId: number) => {
+    setLoadingPhysical(true);
+    try {
+      const response = await fetch(`https://site.web.api.espn.com/apis/common/v3/sports/football/college-football/athletes/${espnId}`);
+      if (!response.ok) throw new Error('Athlete data not found');
+      const data = await response.json();
+      const athlete = data.athlete;
+      if (athlete) {
+        setPhysicalInfo({
+          height: athlete.displayHeight || '--',
+          weight: athlete.displayWeight || '--'
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch physical info:', err);
+      setPhysicalInfo({ height: '--', weight: '--' });
+    } finally {
+      setLoadingPhysical(false);
+    }
+  };
 
   const fetchStats = async (espnId: number) => {
     setLoadingStats(true);
@@ -50,7 +81,6 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
         if (cat.name === 'general') {
           const gp = cat.stats.find((s: any) => s.name === 'gamesPlayed');
           if (gp) parsedStats.gamesPlayed = gp.value;
-          // Mapping fumblesForced from general category as requested
           const ff = cat.stats.find((s: any) => s.name === 'fumblesForced');
           if (ff) parsedStats.forcedFumbles = ff.value;
         }
@@ -196,11 +226,28 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
           </div>
 
           <div className="w-full md:w-1/2 p-5 md:p-10 flex flex-col">
-            <div className="mb-6 md:mb-8 flex justify-between items-start">
-              <div>
-                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">CFB Stats: 2025/26 Season</h3>
-              </div>
-              {onCompare && !completedPick && (
+            {!isOffensiveLineman && (
+              <>
+                <div className="mb-6 md:mb-8 flex justify-between items-start">
+                  <div>
+                    <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">CFB Stats: 2025/26 Season</h3>
+                  </div>
+                  {onCompare && !completedPick && (
+                    <button 
+                      onClick={onCompare}
+                      className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-2"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                      Compare
+                    </button>
+                  )}
+                </div>
+                {renderStats()}
+              </>
+            )}
+
+            {isOffensiveLineman && onCompare && !completedPick && (
+               <div className="mb-6 md:mb-8 flex justify-end">
                 <button 
                   onClick={onCompare}
                   className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-2"
@@ -208,20 +255,27 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                   Compare
                 </button>
-              )}
-            </div>
-            {renderStats()}
+              </div>
+            )}
 
             <div className="my-6 md:my-8">
               <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">Physical Measurements</h3>
               <div className="grid grid-cols-2 gap-4 md:gap-6">
                 <div className="bg-slate-800/50 p-3 md:p-4 rounded-xl border border-slate-700">
                   <span className="block text-[9px] md:text-[10px] font-bold text-slate-500 uppercase mb-0.5 md:mb-1">Height</span>
-                  <span className="text-xl md:text-2xl font-oswald font-bold text-slate-100">{prospect.height}</span>
+                  {loadingPhysical ? (
+                    <div className="h-8 w-16 bg-slate-700 animate-pulse rounded"></div>
+                  ) : (
+                    <span className="text-xl md:text-2xl font-oswald font-bold text-slate-100">{physicalInfo?.height || '--'}</span>
+                  )}
                 </div>
                 <div className="bg-slate-800/50 p-3 md:p-4 rounded-xl border border-slate-700">
                   <span className="block text-[9px] md:text-[10px] font-bold text-slate-500 uppercase mb-0.5 md:mb-1">Weight</span>
-                  <span className="text-xl md:text-2xl font-oswald font-bold text-slate-100">{prospect.weight} lbs</span>
+                  {loadingPhysical ? (
+                    <div className="h-8 w-16 bg-slate-700 animate-pulse rounded"></div>
+                  ) : (
+                    <span className="text-xl md:text-2xl font-oswald font-bold text-slate-100">{physicalInfo?.weight || '--'}</span>
+                  )}
                 </div>
               </div>
             </div>
