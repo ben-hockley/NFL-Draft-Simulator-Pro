@@ -38,6 +38,7 @@ export interface Prospect {
 export interface Team {
   id: string;
   name: string;
+  nickname: string;
   logoUrl: string;
   color: string;
   needs: string[];

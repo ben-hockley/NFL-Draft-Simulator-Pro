@@ -19,8 +19,13 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   onClose,
   onTrade
 }) => {
+  const sortedPartnerTeams = useMemo(() => 
+    [...TEAMS].filter(t => t.id !== userTeamId).sort((a, b) => a.name.localeCompare(b.name)),
+    [userTeamId]
+  );
+
   const [selectedCpuTeamId, setSelectedCpuTeamId] = useState<string>(
-    TEAMS.find(t => t.id !== userTeamId)?.id || ''
+    sortedPartnerTeams[0]?.id || ''
   );
   const [userSelectedAssets, setUserSelectedAssets] = useState<PickAsset[]>([]);
   const [cpuSelectedAssets, setCpuSelectedAssets] = useState<PickAsset[]>([]);
@@ -111,7 +116,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
           <div className="flex items-center gap-2 lg:gap-4 overflow-hidden">
             <div className="flex items-center gap-1 lg:gap-2 shrink-0">
               <img src={initiatorTeam.logoUrl} className="w-6 h-6 lg:w-8 lg:h-8" alt="" />
-              <h2 className="text-sm lg:text-2xl font-black font-oswald text-white uppercase tracking-tight">{initiatorTeam.id} Trade</h2>
+              <h2 className="text-sm lg:text-2xl font-black font-oswald text-white uppercase tracking-tight">{initiatorTeam.nickname} Trade</h2>
             </div>
             <div className="h-6 w-px bg-slate-700 mx-1 lg:mx-2 shrink-0"></div>
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
@@ -124,7 +129,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
                 }}
                 className="bg-slate-900 border border-slate-700 text-slate-100 text-[10px] lg:text-sm font-bold py-1 px-2 lg:py-1.5 lg:px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase"
               >
-                {TEAMS.filter(t => t.id !== userTeamId).map(t => (
+                {sortedPartnerTeams.map(t => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </select>
@@ -200,7 +205,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
           <div className="flex-1 p-4 lg:p-6 overflow-y-auto bg-slate-950/20">
             <div className="flex items-center gap-2 lg:gap-3 mb-3 lg:mb-4">
               <img src={cpuTeam.logoUrl} className="w-5 h-5 lg:w-6 lg:h-6" alt="" />
-              <h3 className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{cpuTeam.id} Assets</h3>
+              <h3 className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{cpuTeam.nickname} Assets</h3>
             </div>
             <div className="space-y-4">
               <div>

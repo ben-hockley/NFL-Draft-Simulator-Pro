@@ -27,6 +27,11 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   const [activeTab, setActiveTab] = useState<BoardTab>('PROSPECTS');
   const scrollRef = useRef<HTMLDivElement>(null);
   
+  const sortedTeams = useMemo(() => 
+    [...TEAMS].sort((a, b) => a.name.localeCompare(b.name)),
+    []
+  );
+
   const picksInScope = useMemo(() => state.picks.filter(p => p.round <= state.roundsToSimulate), [state.picks, state.roundsToSimulate]);
   const currentPick = picksInScope[state.currentPickIndex];
   const isUserTurn = state.userControlledTeams.includes(currentPick?.team.id);
@@ -249,8 +254,8 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                 className="bg-slate-800 border border-slate-700 text-slate-200 text-[9px] font-bold py-1 px-1.5 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 uppercase tracking-tighter max-w-[100px]"
               >
                 <option value="ALL">All Teams</option>
-                {TEAMS.map(team => (
-                  <option key={team.id} value={team.id}>{team.id}</option>
+                {sortedTeams.map(team => (
+                  <option key={team.id} value={team.id}>{team.nickname}</option>
                 ))}
               </select>
             </div>

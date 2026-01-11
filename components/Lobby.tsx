@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TEAMS } from '../constants';
 import { Button } from './Button';
 import { Team, DraftSpeed } from '../types';
@@ -23,6 +23,11 @@ export const Lobby: React.FC<LobbyProps> = ({
   setDraftSpeed,
   onStart 
 }) => {
+  const sortedTeams = useMemo(() => 
+    [...TEAMS].sort((a, b) => a.name.localeCompare(b.name)),
+    []
+  );
+
   const toggleTeam = (teamId: string) => {
     if (userControlledTeams.includes(teamId)) {
       setUserControlledTeams(userControlledTeams.filter(id => id !== teamId));
@@ -42,7 +47,7 @@ export const Lobby: React.FC<LobbyProps> = ({
           2026 NFL Draft Simulator
         </h1>
         <p className="text-slate-400 text-[10px] lg:text-sm">
-          Select the team(s) you wish to control
+          Select your team(s)
         </p>
       </header>
 
@@ -124,7 +129,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 
           {/* Team Grid */}
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 gap-2 pb-8">
-            {TEAMS.map((team) => {
+            {sortedTeams.map((team) => {
               const isSelected = userControlledTeams.includes(team.id);
               return (
                 <button
@@ -145,7 +150,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                   </div>
                   
                   <span className={`text-[8px] lg:text-[10px] font-black uppercase text-center leading-none truncate w-full ${isSelected ? 'text-emerald-400' : 'text-slate-500'}`}>
-                    {team.id}
+                    {team.nickname}
                   </span>
 
                   {isSelected && (

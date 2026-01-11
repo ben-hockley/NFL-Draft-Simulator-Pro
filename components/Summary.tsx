@@ -15,8 +15,16 @@ type SummaryTab = 'RESULTS' | 'BEST_AVAILABLE' | 'MY_PICKS';
 export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectProspect }) => {
   const [activeTab, setActiveTab] = useState<SummaryTab>('RESULTS');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  
+  const sortedUserTeams = useMemo(() => 
+    [...state.userControlledTeams]
+      .map(tid => TEAMS.find(t => t.id === tid)!)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [state.userControlledTeams]
+  );
+
   const [selectedMyPicksTeamId, setSelectedMyPicksTeamId] = useState<string>(
-    state.userControlledTeams[0] || ''
+    sortedUserTeams[0]?.id || ''
   );
   
   const graphicRef = useRef<HTMLDivElement>(null);
@@ -206,9 +214,8 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
                     onChange={(e) => setSelectedMyPicksTeamId(e.target.value)}
                     className="bg-slate-900 border border-slate-700 text-slate-200 text-xs font-bold py-1 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 uppercase"
                   >
-                    {state.userControlledTeams.map(tid => {
-                      const team = TEAMS.find(t => t.id === tid);
-                      return <option key={tid} value={tid}>{team?.name}</option>;
+                    {sortedUserTeams.map(team => {
+                      return <option key={team.id} value={team.id}>{team.name}</option>;
                     })}
                   </select>
                 </div>
@@ -290,98 +297,4 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
         style={{ minHeight: '1300px' }}
       >
         <div className="border-[8px] border-emerald-500 h-full p-8 relative overflow-hidden">
-          <header className="mb-12 border-b-2 border-emerald-500/50 pb-8 flex justify-between items-end">
-            <div>
-              <h1 className="text-6xl font-black font-oswald italic uppercase tracking-tighter text-emerald-500">2026 DRAFT</h1>
-              <h2 className="text-3xl font-bold font-oswald uppercase text-slate-100 tracking-widest mt-1">First Round Results</h2>
-            </div>
-            <div className="text-right">
-              <span className="text-emerald-500 font-black text-xl font-oswald">2026 NFL DRAFT SIMULATOR</span>
-            </div>
-          </header>
-          <div className="grid grid-cols-2 gap-x-12 gap-y-3">
-            {firstRoundPicks.map((pick) => {
-              const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
-              return (
-                <div key={pick.pickNumber} className="flex items-center gap-4 bg-slate-900/50 border border-slate-800 p-3 rounded-xl">
-                  <span className="text-xl font-black font-oswald text-emerald-500 w-8">#{pick.pickNumber}</span>
-                  <div className="w-8 h-8 flex-shrink-0 relative">
-                    <img src={pick.team.logoUrl} className="w-full h-full object-contain" alt="" />
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <div className="text-xs font-bold text-slate-100 truncate uppercase tracking-tight">{player?.name || 'TBD'}</div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-black text-emerald-400 uppercase">{player?.position}</span>
-                      <span className="text-[9px] text-slate-500 font-bold uppercase truncate">{player?.college}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <footer className="mt-12 pt-8 border-t border-slate-800 flex justify-center items-center gap-4 opacity-50">
-             <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Official Simulation Recap &bull; Round 1 Results Only</div>
-          </footer>
-        </div>
-      </div>
-
-      {/* HIDDEN MY PICKS GRAPHIC TEMPLATE */}
-      <div 
-        ref={myPicksGraphicRef}
-        className="absolute top-0 left-[-9999px] w-[800px] bg-slate-950 p-12 text-white font-inter"
-      >
-        <div className="border-[8px] border-slate-800 h-full p-8 relative overflow-hidden bg-[#0a0f1d]">
-          <header className="mb-12 flex items-center justify-between border-b-4 border-slate-800 pb-10">
-            <div className="flex items-center gap-6">
-              <img src={selectedTeamData?.logoUrl} className="w-24 h-24 object-contain" alt="" />
-              <div>
-                <h1 className="text-4xl font-black font-oswald uppercase text-white tracking-tight">{selectedTeamData?.name}</h1>
-                <h2 className="text-2xl font-bold font-oswald uppercase text-emerald-500 tracking-[0.2em]">2026 Mock Draft Class</h2>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-slate-500 font-black text-sm uppercase tracking-widest">Official Draft Simulation</div>
-              <div className="text-slate-700 font-bold text-xs uppercase tracking-tighter mt-1">Powered by Gridiron Pro</div>
-            </div>
-          </header>
-
-          <div className="grid grid-cols-1 gap-4">
-            {myPicksForSelectedTeam.map((pick) => {
-              const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
-              return (
-                <div key={pick.pickNumber} className="flex items-center gap-6 bg-slate-900/80 border-2 border-slate-800 p-5 rounded-3xl">
-                  <div className="flex flex-col items-center justify-center bg-slate-950 border border-slate-800 rounded-2xl p-4 min-w-[100px]">
-                    <span className="text-slate-500 text-[10px] font-black uppercase mb-1">Pick</span>
-                    <span className="text-3xl font-black font-oswald text-emerald-400">#{pick.pickNumber}</span>
-                    <span className="text-[10px] font-bold text-slate-600 uppercase mt-1">Round {pick.round}</span>
-                  </div>
-                  
-                  <div className="w-20 h-20 rounded-2xl bg-slate-800 overflow-hidden border-2 border-slate-700 shrink-0">
-                    <img src={player?.headshotUrl} className="w-full h-full object-cover" alt="" />
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[11px] font-black rounded uppercase border border-emerald-500/20">
-                        {player?.position}
-                      </span>
-                      <h3 className="text-2xl font-black text-slate-100 uppercase tracking-tight">{player?.name}</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <img src={player?.collegeLogoUrl} className="w-5 h-5 object-contain" alt="" />
-                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{player?.college}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <footer className="mt-16 pt-8 border-t border-slate-800 text-center">
-            <p className="text-slate-600 font-bold text-[10px] uppercase tracking-[0.4em]">Gridiron Draft Simulator Pro &bull; Advanced Simulation Engine</p>
-          </footer>
-        </div>
-      </div>
-    </div>
-  );
-};
+          <header className="mb-

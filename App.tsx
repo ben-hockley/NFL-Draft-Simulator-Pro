@@ -233,6 +233,11 @@ const App: React.FC = () => {
     [selectedProspectId]
   );
 
+  const sortedUserTeams = useMemo(() => 
+    [...userControlledTeams].map(tid => TEAMS.find(t => t.id === tid)!).sort((a, b) => a.name.localeCompare(b.name)),
+    [userControlledTeams]
+  );
+
   const selectionInfo = useMemo(() => {
     if (!selectedProspectId) return null;
     const pick = state.picks.find(p => p.selectedPlayerId === selectedProspectId);
@@ -436,20 +441,19 @@ const App: React.FC = () => {
               </div>
               <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-95/20">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {userControlledTeams.map(tid => {
-                    const team = TEAMS.find(t => t.id === tid)!;
+                  {sortedUserTeams.map(team => {
                     return (
                       <button
-                        key={tid}
+                        key={team.id}
                         onClick={() => {
-                          setActiveTradingTeamId(tid);
+                          setActiveTradingTeamId(team.id);
                           setIsSelectingTradeTeam(false);
                           setIsTradeModalOpen(true);
                         }}
                         className="flex flex-col items-center gap-2 p-4 bg-slate-800 border border-slate-700 rounded-xl hover:bg-emerald-500/10 hover:border-emerald-500/50 transition-all group"
                       >
                         <img src={team.logoUrl} className="w-10 h-10 lg:w-12 lg:h-12 object-contain" alt="" />
-                        <span className="text-[10px] lg:text-xs font-bold text-slate-300 group-hover:text-emerald-400 uppercase tracking-widest">{team.id}</span>
+                        <span className="text-[10px] lg:text-xs font-bold text-slate-300 group-hover:text-emerald-400 uppercase tracking-widest">{team.nickname}</span>
                       </button>
                     );
                   })}
@@ -477,7 +481,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="hidden lg:block py-1.5 px-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-widest bg-slate-900/50 border-t border-slate-800 shrink-0">
-        &copy; 2026 NFL DRAFT SIMULATOR
+        2026 NFL DRAFT SIMULATOR
       </footer>
     </div>
   );
