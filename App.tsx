@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppView, DraftState, Prospect, Position, PickAsset, DraftSpeed } from './types';
-import { INITIAL_DRAFT_ORDER, PROSPECTS, TEAMS } from './constants';
+import { INITIAL_DRAFT_ORDER, TEAMS, getEspnUrl, getCollegeLogoUrl } from './constants';
 import { Lobby } from './components/Lobby';
 import { DraftBoard } from './components/DraftBoard';
 import { PlayerDetail } from './components/PlayerDetail';
@@ -9,6 +9,7 @@ import { Summary } from './components/Summary';
 import { TradeModal } from './components/TradeModal';
 import { PlayerComparison } from './components/PlayerComparison';
 import { Button } from './components/Button';
+import { supabase } from './supabase';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('LOBBY');
@@ -20,19 +21,56 @@ const App: React.FC = () => {
   const [isSelectingTradeTeam, setIsSelectingTradeTeam] = useState(false);
   const [activeTradingTeamId, setActiveTradingTeamId] = useState<string | null>(null);
   const [comparisonBasePlayer, setComparisonBasePlayer] = useState<Prospect | null>(null);
+  const [isLoadingProspects, setIsLoadingProspects] = useState(true);
 
   const [state, setState] = useState<DraftState>({
     currentPickIndex: 0,
     picks: INITIAL_DRAFT_ORDER,
     userControlledTeams: [],
     isDraftStarted: false,
-    prospects: PROSPECTS,
+    prospects: [],
     roundsToSimulate: 1,
     draftSpeed: 'MEDIUM',
     futurePicks: {}
   });
 
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
+
+  // Fetch prospects from Supabase on mount
+  useEffect(() => {
+    const fetchProspects = async () => {
+      setIsLoadingProspects(true);
+      try {
+        const { data, error } = await supabase
+          .from('prospects')
+          .select('*')
+          .order('rank', { ascending: true }); // Order by the new rank column
+
+        if (error) throw error;
+
+        if (data) {
+          const mappedProspects: Prospect[] = data.map((p: any) => ({
+            id: p.id.toString(),
+            espnId: p.espnId,
+            name: p.Name,
+            college: p.College,
+            position: p.Position,
+            scoutingReport: p['Scouting Report'] || '',
+            rank: p.rank || 999, // Use the rank column from Supabase
+            headshotUrl: getEspnUrl(p.espnId),
+            collegeLogoUrl: getCollegeLogoUrl(p.College)
+          }));
+          setState(prev => ({ ...prev, prospects: mappedProspects }));
+        }
+      } catch (err) {
+        console.error('Error fetching prospects:', err);
+      } finally {
+        setIsLoadingProspects(false);
+      }
+    };
+
+    fetchProspects();
+  }, []);
 
   const startDraft = () => {
     const allPicks = INITIAL_DRAFT_ORDER;
@@ -63,16 +101,16 @@ const App: React.FC = () => {
     setIsSimulationPaused(false);
     setIsSelectingTradeTeam(false);
     setActiveTradingTeamId(null);
-    setState({
+    setState(prev => ({
+      ...prev,
       currentPickIndex: 0,
       picks: INITIAL_DRAFT_ORDER,
       userControlledTeams: [],
       isDraftStarted: false,
-      prospects: PROSPECTS,
       roundsToSimulate: 1,
       draftSpeed: 'MEDIUM',
       futurePicks: {}
-    });
+    }));
   };
 
   const handleDraftPlayer = useCallback((prospect: Prospect) => {
@@ -139,7 +177,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const picksInScope = state.picks.filter(p => p.round <= state.roundsToSimulate);
-    if (view !== 'DRAFT' || state.currentPickIndex >= picksInScope.length || isSimulationPaused) {
+    if (view !== 'DRAFT' || state.currentPickIndex >= picksInScope.length || isSimulationPaused || isLoadingProspects) {
       if (state.currentPickIndex >= picksInScope.length && state.isDraftStarted && view === 'DRAFT') {
          setView('SUMMARY');
       }
@@ -202,7 +240,7 @@ const App: React.FC = () => {
       }, speedMap[state.draftSpeed]); 
       return () => clearTimeout(timer);
     }
-  }, [view, state.currentPickIndex, state.userControlledTeams, state.picks, state.prospects, state.isDraftStarted, handleDraftPlayer, isSimulationPaused, state.roundsToSimulate, state.draftSpeed]);
+  }, [view, state.currentPickIndex, state.userControlledTeams, state.picks, state.prospects, state.isDraftStarted, handleDraftPlayer, isSimulationPaused, state.roundsToSimulate, state.draftSpeed, isLoadingProspects]);
 
   const picksInScope = state.picks.filter(p => p.round <= state.roundsToSimulate);
   const currentPick = picksInScope[state.currentPickIndex];
@@ -229,8 +267,8 @@ const App: React.FC = () => {
   }, [currentPick, state.picks, state.prospects]);
 
   const selectedProspect = useMemo(() => 
-    PROSPECTS.find(p => p.id === selectedProspectId) || null, 
-    [selectedProspectId]
+    state.prospects.find(p => p.id === selectedProspectId) || null, 
+    [selectedProspectId, state.prospects]
   );
 
   const sortedUserTeams = useMemo(() => 
@@ -243,6 +281,16 @@ const App: React.FC = () => {
     const pick = state.picks.find(p => p.selectedPlayerId === selectedProspectId);
     return pick ? { team: pick.team, pickNumber: pick.pickNumber } : null;
   }, [state.picks, selectedProspectId]);
+
+  if (isLoadingProspects && view === 'LOBBY') {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white">
+        <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-6"></div>
+        <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-emerald-400">Loading Prospects...</h2>
+        <p className="text-slate-500 text-sm mt-2 animate-pulse">Syncing with scouting database</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-slate-950">
@@ -288,7 +336,6 @@ const App: React.FC = () => {
                       </div>
                     </div>
                     
-                    {/* Team Needs - Moved below name/picks for mobile responsiveness */}
                     <div className="flex items-center gap-2 mt-1 overflow-x-auto no-scrollbar scrollbar-none">
                       <span className="text-[7px] lg:text-[9px] font-black text-slate-600 uppercase shrink-0">Needs:</span>
                       <div className="flex gap-1">
@@ -409,6 +456,7 @@ const App: React.FC = () => {
         {selectedProspect && (
           <PlayerDetail 
             prospect={selectedProspect}
+            allProspects={state.prospects}
             currentTeam={currentPick?.team}
             isUserTurn={view === 'DRAFT' && !!currentPick && state.userControlledTeams.includes(currentPick.team.id) && !selectionInfo}
             onDraft={handleDraftPlayer}
@@ -424,6 +472,7 @@ const App: React.FC = () => {
         {comparisonBasePlayer && (
           <PlayerComparison 
             basePlayer={comparisonBasePlayer}
+            allProspects={state.prospects}
             onClose={() => setComparisonBasePlayer(null)}
             onDraft={handleDraftPlayer}
             isUserTurn={view === 'DRAFT' && !!currentPick && state.userControlledTeams.includes(currentPick.team.id)}

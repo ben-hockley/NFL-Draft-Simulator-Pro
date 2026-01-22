@@ -2,10 +2,10 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { Prospect, Team, PlayerStats } from '../types';
 import { Button } from './Button';
-import { PROSPECTS } from '../constants';
 
 interface PlayerDetailProps {
   prospect: Prospect | null;
+  allProspects: Prospect[];
   currentTeam?: Team;
   isUserTurn?: boolean;
   onDraft: (prospect: Prospect) => void;
@@ -16,6 +16,7 @@ interface PlayerDetailProps {
 
 export const PlayerDetail: React.FC<PlayerDetailProps> = ({ 
   prospect, 
+  allProspects,
   currentTeam, 
   isUserTurn, 
   onDraft,
@@ -117,12 +118,12 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
   };
 
   const positionRank = useMemo(() => {
-    if (!prospect) return 0;
-    const posProspects = PROSPECTS
+    if (!prospect || !allProspects.length) return 0;
+    const posProspects = allProspects
       .filter(p => p.position === prospect.position)
       .sort((a, b) => a.rank - b.rank);
     return posProspects.findIndex(p => p.id === prospect.id) + 1;
-  }, [prospect]);
+  }, [prospect, allProspects]);
 
   if (!prospect) return null;
 

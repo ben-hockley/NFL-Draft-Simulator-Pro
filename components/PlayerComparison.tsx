@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Prospect, PlayerStats } from '../types';
-import { PROSPECTS } from '../constants';
 
 interface PlayerComparisonProps {
   basePlayer: Prospect;
+  allProspects: Prospect[];
   onClose: () => void;
   onDraft: (prospect: Prospect) => void;
   isUserTurn?: boolean;
@@ -17,6 +17,7 @@ interface PhysicalInfo {
 
 export const PlayerComparison: React.FC<PlayerComparisonProps> = ({ 
   basePlayer, 
+  allProspects,
   onClose, 
   onDraft,
   isUserTurn 
@@ -33,9 +34,11 @@ export const PlayerComparison: React.FC<PlayerComparisonProps> = ({
     return ['OT', 'IOL', 'OG', 'C'].includes(basePlayer.position);
   }, [basePlayer.position]);
 
-  const candidates = PROSPECTS
-    .filter(p => p.position === basePlayer.position)
-    .sort((a, b) => a.rank - b.rank);
+  const candidates = useMemo(() => {
+    return allProspects
+      .filter(p => p.position === basePlayer.position)
+      .sort((a, b) => a.rank - b.rank);
+  }, [allProspects, basePlayer.position]);
 
   useEffect(() => {
     setPhys1(null);
