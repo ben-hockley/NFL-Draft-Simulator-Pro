@@ -530,7 +530,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="hidden lg:block py-1.5 px-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-widest bg-slate-900/50 border-t border-slate-800 shrink-0">
-        2026 NFL DRAFT SIMULATOR
+        2026 NFL DRAFT SIMULATOR | SUNDAYSCOUTS.COM
       </footer>
     </div>
   );

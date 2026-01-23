@@ -44,7 +44,7 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Header Section - Compact and Fixed */}
       <header className="text-center py-3 lg:py-6 shrink-0 bg-slate-900/30 border-b border-slate-800/50">
         <h1 className="text-2xl lg:text-4xl font-black font-oswald text-emerald-400 uppercase tracking-tight">
-          2026 NFL Draft Simulator
+          SundayScouts.com 2026 NFL Draft Simulator
         </h1>
         <p className="text-slate-400 text-[10px] lg:text-sm">
           Select your team(s)
