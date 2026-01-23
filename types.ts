@@ -1,5 +1,5 @@
 
-export type Position = 'QB' | 'RB' | 'WR' | 'TE' | 'OT' | 'OG' | 'C' | 'DE' | 'DT' | 'LB' | 'CB' | 'S' | 'K' | 'P' | 'IOL' | 'DL' | 'EDGE';
+export type Position = 'QB' | 'RB' | 'WR' | 'TE' | 'OT' | 'OG' | 'C' | 'DE' | 'DT' | 'LB' | 'CB' | 'S' | 'K' | 'P' | 'LS' | 'IOL' | 'DL' | 'EDGE';
 
 export type DraftSpeed = 'SLOW' | 'MEDIUM' | 'FAST';
 
@@ -18,6 +18,12 @@ export interface PlayerStats {
   sacks?: number;
   defInts?: number;
   forcedFumbles?: number;
+  fgPct?: string;
+  xpPct?: string;
+  longFg?: number;
+  punts?: number;
+  longPunt?: number;
+  inside20?: number;
 }
 
 export interface Prospect {

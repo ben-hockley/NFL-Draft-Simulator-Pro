@@ -11,7 +11,7 @@ interface DraftBoardProps {
   selectedProspectId: string | null;
 }
 
-const POSITIONS: Position[] = ['QB', 'RB', 'WR', 'TE', 'OT', 'IOL', 'EDGE', 'DL', 'LB', 'CB', 'S'];
+const POSITIONS: Position[] = ['QB', 'RB', 'WR', 'TE', 'OT', 'IOL', 'EDGE', 'DL', 'LB', 'CB', 'S', 'K', 'P', 'LS'];
 
 type BoardTab = 'PROSPECTS' | 'TRACKER';
 

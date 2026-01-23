@@ -107,6 +107,16 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
         if (cat.name === 'defensiveInterceptions') {
           parsedStats.defInts = cat.stats.find((s: any) => s.name === 'interceptions')?.value;
         }
+        if (cat.name === 'kicking') {
+          parsedStats.fgPct = cat.stats.find((s: any) => s.name === 'fieldGoalPct')?.displayValue;
+          parsedStats.xpPct = cat.stats.find((s: any) => s.name === 'extraPointPct')?.displayValue;
+          parsedStats.longFg = cat.stats.find((s: any) => s.name === 'longFieldGoalMade')?.value;
+        }
+        if (cat.name === 'punting') {
+          parsedStats.punts = cat.stats.find((s: any) => s.name === 'punts')?.value;
+          parsedStats.longPunt = cat.stats.find((s: any) => s.name === 'longPunt')?.value;
+          parsedStats.inside20 = cat.stats.find((s: any) => s.name === 'puntsInside20')?.value;
+        }
       });
 
       setStats(parsedStats);
@@ -169,6 +179,14 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
       statBoxes.push({ label: 'Sacks', value: stats.sacks || 0 });
       statBoxes.push({ label: 'FF', value: stats.forcedFumbles || 0 });
       statBoxes.push({ label: 'INT', value: stats.defInts || 0 });
+    } else if (prospect.position === 'K') {
+      statBoxes.push({ label: 'FG %', value: stats.fgPct || '0%' });
+      statBoxes.push({ label: 'XP %', value: stats.xpPct || '0%' });
+      statBoxes.push({ label: 'LNG', value: stats.longFg || 0 });
+    } else if (prospect.position === 'P') {
+      statBoxes.push({ label: 'Punts', value: stats.punts || 0 });
+      statBoxes.push({ label: 'LNG', value: stats.longPunt || 0 });
+      statBoxes.push({ label: 'In20', value: stats.inside20 || 0 });
     }
 
     return (

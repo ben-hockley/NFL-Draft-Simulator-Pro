@@ -116,6 +116,16 @@ export const PlayerComparison: React.FC<PlayerComparisonProps> = ({
           parsed.sacks = cat.stats.find((s: any) => s.name === 'sacks')?.value;
         }
         if (cat.name === 'defensiveInterceptions') parsed.defInts = cat.stats.find((s: any) => s.name === 'interceptions')?.value;
+        if (cat.name === 'kicking') {
+          parsed.fgPct = cat.stats.find((s: any) => s.name === 'fieldGoalPct')?.displayValue;
+          parsed.xpPct = cat.stats.find((s: any) => s.name === 'extraPointPct')?.displayValue;
+          parsed.longFg = cat.stats.find((s: any) => s.name === 'longFieldGoalMade')?.value;
+        }
+        if (cat.name === 'punting') {
+          parsed.punts = cat.stats.find((s: any) => s.name === 'punts')?.value;
+          parsed.longPunt = cat.stats.find((s: any) => s.name === 'longPunt')?.value;
+          parsed.inside20 = cat.stats.find((s: any) => s.name === 'puntsInside20')?.value;
+        }
       });
 
       if (type === 'p1') setStats1(parsed);
@@ -348,6 +358,22 @@ export const PlayerComparison: React.FC<PlayerComparisonProps> = ({
                           {renderComparisonRow('Sacks', stats1?.sacks, stats2?.sacks)}
                           {renderComparisonRow('Forced Fumbles', stats1?.forcedFumbles, stats2?.forcedFumbles)}
                           {renderComparisonRow('Interceptions', stats1?.defInts, stats2?.defInts)}
+                        </>
+                      )}
+
+                      {player1.position === 'K' && (
+                        <>
+                          {renderComparisonRow('Field Goal %', stats1?.fgPct, stats2?.fgPct)}
+                          {renderComparisonRow('Extra Point %', stats1?.xpPct, stats2?.xpPct)}
+                          {renderComparisonRow('Longest FG', stats1?.longFg, stats2?.longFg)}
+                        </>
+                      )}
+
+                      {player1.position === 'P' && (
+                        <>
+                          {renderComparisonRow('Punts', stats1?.punts, stats2?.punts)}
+                          {renderComparisonRow('Longest Punt', stats1?.longPunt, stats2?.longPunt)}
+                          {renderComparisonRow('Punts Inside 20', stats1?.inside20, stats2?.inside20)}
                         </>
                       )}
                     </>
