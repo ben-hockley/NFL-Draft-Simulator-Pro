@@ -12,6 +12,16 @@ interface SummaryProps {
 
 type SummaryTab = 'RESULTS' | 'BEST_AVAILABLE' | 'MY_PICKS';
 
+const GRADES = ['F-', 'F', 'F+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+'];
+
+const getGradeColor = (grade: string) => {
+  if (grade.startsWith('A')) return 'text-emerald-400 bg-emerald-500/20 border-emerald-500/40';
+  if (grade.startsWith('B')) return 'text-blue-400 bg-blue-500/20 border-blue-500/40';
+  if (grade.startsWith('C')) return 'text-amber-400 bg-amber-500/20 border-amber-500/40';
+  if (grade.startsWith('D')) return 'text-orange-400 bg-orange-500/20 border-orange-500/40';
+  return 'text-red-400 bg-red-500/20 border-red-500/40';
+};
+
 export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectProspect }) => {
   const [activeTab, setActiveTab] = useState<SummaryTab>('RESULTS');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -38,6 +48,34 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
       .filter(p => !draftedIds.includes(p.id))
       .sort((a, b) => a.rank - b.rank);
   }, [state.prospects, state.picks]);
+
+  const calculateGrade = (pickNumber: number, prospect: Prospect, teamNeeds: string[]) => {
+    const diff = pickNumber - prospect.rank;
+    let baseIndex = 10; // Default B
+
+    if (diff >= 40) baseIndex = 14;      // A+
+    else if (diff >= 25) baseIndex = 13; // A
+    else if (diff >= 15) baseIndex = 12; // A-
+    else if (diff >= 5) baseIndex = 11;  // B+
+    else if (diff >= -5) baseIndex = 10; // B
+    else if (diff >= -15) baseIndex = 9; // B-
+    else if (diff >= -25) baseIndex = 8; // C+
+    else if (diff >= -35) baseIndex = 7; // C
+    else if (diff >= -45) baseIndex = 6; // C-
+    else if (diff >= -55) baseIndex = 5; // D+
+    else if (diff >= -65) baseIndex = 4; // D
+    else if (diff >= -75) baseIndex = 3; // D-
+    else if (diff >= -85) baseIndex = 2; // F+
+    else if (diff >= -100) baseIndex = 1;// F
+    else baseIndex = 0;                  // F-
+
+    // Boost by one whole grade (3 sub-grades) if fulfilled a need
+    if (teamNeeds.includes(prospect.position)) {
+      baseIndex = Math.min(GRADES.length - 1, baseIndex + 3);
+    }
+
+    return GRADES[baseIndex];
+  };
 
   const myPicksForSelectedTeam = useMemo(() => {
     return scopePicks.filter(p => p.team.id === selectedMyPicksTeamId);
@@ -75,7 +113,6 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
     <div className="h-full w-full flex flex-col p-2 lg:p-6 bg-slate-950 overflow-hidden animate-fadeIn">
       <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         
-        {/* Compact Header */}
         <header className="bg-slate-800/50 px-4 py-2 lg:py-4 flex items-center justify-between border-b border-slate-700 shrink-0">
           <div className="flex flex-col">
             <h1 className="text-sm lg:text-2xl font-black font-oswald uppercase tracking-tight text-white leading-none">Draft Summary</h1>
@@ -112,7 +149,6 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
           </div>
         </header>
 
-        {/* Minimal Tab Nav */}
         <div className="flex bg-slate-900/50 border-b border-slate-800 p-0.5 shrink-0">
           <button
             onClick={() => setActiveTab('RESULTS')}
@@ -146,7 +182,6 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
           </button>
         </div>
 
-        {/* Main Content Area */}
         <div className="flex-1 min-h-0 overflow-y-auto bg-slate-950/20 p-2 lg:p-4">
           {activeTab === 'RESULTS' ? (
             <div className="space-y-6">
@@ -224,14 +259,18 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 content-start">
                 {myPicksForSelectedTeam.map((pick) => {
                   const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
+                  if (!player) return null;
+                  const grade = calculateGrade(pick.pickNumber, player, pick.team.needs);
+                  const gradeClass = getGradeColor(grade);
+
                   return (
                     <div 
                       key={pick.pickNumber}
-                      onClick={() => player && onSelectProspect(player)}
-                      className="flex items-center gap-3 p-3 bg-slate-800/40 border border-slate-800 rounded-xl hover:bg-slate-800/60 cursor-pointer transition-all group"
+                      onClick={() => onSelectProspect(player)}
+                      className="flex items-center gap-3 p-3 bg-slate-800/40 border border-slate-800 rounded-xl hover:bg-slate-800/60 cursor-pointer transition-all group relative"
                     >
                       <div className="w-12 h-12 rounded-lg bg-slate-700 overflow-hidden shrink-0 border border-slate-600 group-hover:border-emerald-500/50">
-                        <img src={player?.headshotUrl} className="w-full h-full object-cover" alt="" />
+                        <img src={player.headshotUrl} className="w-full h-full object-cover" alt="" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -240,11 +279,14 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
                             RD {pick.round}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-slate-100 truncate">{player?.name}</h4>
+                        <h4 className="text-sm font-bold text-slate-100 truncate">{player.name}</h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <img src={player?.collegeLogoUrl} className="w-3 h-3 object-contain opacity-70" alt="" />
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-tight">{player?.position} &bull; {player?.college}</span>
+                          <img src={player.collegeLogoUrl} className="w-3 h-3 object-contain opacity-70" alt="" />
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-tight">{player.position} &bull; {player.college}</span>
                         </div>
+                      </div>
+                      <div className={`w-8 h-8 rounded-lg border flex items-center justify-center font-black font-oswald text-sm shrink-0 ${gradeClass}`}>
+                        {grade}
                       </div>
                     </div>
                   );
@@ -278,7 +320,6 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
           )}
         </div>
 
-        {/* Compact Footer CTA */}
         <div className="p-3 lg:p-4 bg-slate-900 border-t border-slate-800 flex justify-center shrink-0">
           <Button 
             variant="primary"
@@ -290,9 +331,6 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
         </div>
       </div>
 
-      {/* HIDDEN GRAPHIC TEMPLATES */}
-      
-      {/* 1. ROUND 1 RECAP GRAPHIC */}
       <div 
         ref={graphicRef}
         className="absolute top-0 left-[-9999px] w-[1000px] bg-slate-950 p-12 text-white font-inter"
@@ -328,7 +366,6 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
         </div>
       </div>
 
-      {/* 2. MY DRAFT CLASS GRAPHIC */}
       <div 
         ref={myPicksGraphicRef}
         className="absolute top-0 left-[-9999px] w-[1000px] bg-slate-950 p-12 text-white font-inter"
@@ -350,21 +387,28 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
           <div className="grid grid-cols-2 gap-6">
             {myPicksForSelectedTeam.map((pick) => {
               const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
+              if (!player) return null;
+              const grade = calculateGrade(pick.pickNumber, player, pick.team.needs);
+              const gradeClass = getGradeColor(grade);
+
               return (
-                <div key={pick.pickNumber} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex items-center gap-6">
+                <div key={pick.pickNumber} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex items-center gap-6 relative">
                    <div className="w-20 h-20 rounded-full bg-slate-800 overflow-hidden border-2 border-emerald-500/30">
-                      <img src={player?.headshotUrl} className="w-full h-full object-cover" alt="" />
+                      <img src={player.headshotUrl} className="w-full h-full object-cover" alt="" />
                    </div>
                    <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
                         <span className="text-sm font-black text-emerald-500">RD {pick.round} &bull; PICK {pick.pickNumber}</span>
                       </div>
-                      <h3 className="text-xl font-black text-white uppercase tracking-tight">{player?.name || '---'}</h3>
+                      <h3 className="text-xl font-black text-white uppercase tracking-tight">{player.name}</h3>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="text-sm font-bold text-slate-400 uppercase">{player?.position}</span>
+                        <span className="text-sm font-bold text-slate-400 uppercase">{player.position}</span>
                         <div className="w-1 h-1 bg-slate-700 rounded-full"></div>
-                        <span className="text-sm font-medium text-slate-500 uppercase">{player?.college}</span>
+                        <span className="text-sm font-medium text-slate-500 uppercase">{player.college}</span>
                       </div>
+                   </div>
+                   <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center font-black font-oswald text-2xl shrink-0 ${gradeClass}`}>
+                      {grade}
                    </div>
                 </div>
               );
