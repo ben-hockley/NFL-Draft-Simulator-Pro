@@ -58,7 +58,9 @@ const App: React.FC = () => {
             scoutingReport: p['Scouting Report'] || '',
             rank: p.rank || 999, // Use the rank column from Supabase
             headshotUrl: getEspnUrl(p.espnId),
-            collegeLogoUrl: getCollegeLogoUrl(p.College)
+            collegeLogoUrl: getCollegeLogoUrl(p.College),
+            strengths: p.Strengths ? p.Strengths.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+            weaknesses: p.Weaknesses ? p.Weaknesses.split(',').map((s: string) => s.trim()).filter(Boolean) : []
           }));
           setState(prev => ({ ...prev, prospects: mappedProspects }));
         }

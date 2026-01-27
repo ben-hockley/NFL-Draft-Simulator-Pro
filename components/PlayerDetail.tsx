@@ -203,9 +203,10 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl md:rounded-3xl overflow-y-auto md:overflow-hidden max-h-[95vh] md:max-h-none shadow-[0_0_50px_rgba(0,0,0,0.5)] relative">
+      <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl md:rounded-3xl overflow-y-auto md:overflow-hidden max-h-[95vh] md:max-h-[850px] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative">
         <button 
           onClick={onClose}
+          aria-label="Close Prospect Detail"
           className="absolute top-4 right-4 md:top-6 md:right-6 p-1.5 md:p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 transition-colors z-20"
         >
           <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,11 +214,12 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
           </svg>
         </button>
 
-        <div className="flex flex-col md:flex-row">
-          <div className="w-full md:w-1/2 bg-slate-800 relative h-[250px] md:h-auto md:min-h-[450px] shrink-0">
+        <div className="flex flex-col md:flex-row md:h-[850px] md:max-h-[85vh]">
+          {/* Left Column: Image (Fixed on desktop) */}
+          <div className="w-full md:w-1/2 bg-slate-800 relative h-[250px] md:h-full shrink-0">
             <img 
               src={prospect.headshotUrl} 
-              alt={prospect.name} 
+              alt={`${prospect.name} headshot - ${prospect.college} ${prospect.position} prospect profile`} 
               className="w-full h-full object-cover object-top opacity-80"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
@@ -237,80 +239,119 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
                 <span>{prospect.position}</span>
                 <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-slate-600"></span>
                 <div className="flex items-center gap-1.5 md:gap-2">
-                  <img src={prospect.collegeLogoUrl} className="w-4 h-4 md:w-6 md:h-6 object-contain" alt="" />
+                  <img 
+                    src={prospect.collegeLogoUrl} 
+                    className="w-4 h-4 md:w-6 md:h-6 object-contain" 
+                    alt={`${prospect.college} Logo`} 
+                  />
                   <span>{prospect.college}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="w-full md:w-1/2 p-5 md:p-10 flex flex-col">
-            {!isOffensiveLineman && (
-              <>
-                <div className="mb-6 md:mb-8 flex justify-between items-start">
-                  <div>
-                    <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">CFB Stats: 2025/26 Season</h3>
+          {/* Right Column: Scrollable Content on desktop */}
+          <div className="w-full md:w-1/2 p-5 md:p-8 lg:p-10 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 pb-6">
+              {!isOffensiveLineman && (
+                <>
+                  <div className="mb-6 md:mb-8 flex justify-between items-start">
+                    <div>
+                      <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">CFB Stats: 2025/26 Season</h3>
+                    </div>
+                    {onCompare && !completedPick && (
+                      <button 
+                        onClick={onCompare}
+                        className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-2"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        Compare
+                      </button>
+                    )}
                   </div>
-                  {onCompare && !completedPick && (
-                    <button 
-                      onClick={onCompare}
-                      className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-2"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                      Compare
-                    </button>
-                  )}
-                </div>
-                {renderStats()}
-              </>
-            )}
+                  {renderStats()}
+                </>
+              )}
 
-            {isOffensiveLineman && onCompare && !completedPick && (
-               <div className="mb-6 md:mb-8 flex justify-end">
-                <button 
-                  onClick={onCompare}
-                  className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-2"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                  Compare
-                </button>
-              </div>
-            )}
-
-            <div className="my-6 md:my-8">
-              <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">Physical Measurements</h3>
-              <div className="grid grid-cols-2 gap-4 md:gap-6">
-                <div className="bg-slate-800/50 p-3 md:p-4 rounded-xl border border-slate-700">
-                  <span className="block text-[9px] md:text-[10px] font-bold text-slate-500 uppercase mb-0.5 md:mb-1">Height</span>
-                  {loadingPhysical ? (
-                    <div className="h-8 w-16 bg-slate-700 animate-pulse rounded"></div>
-                  ) : (
-                    <span className="text-xl md:text-2xl font-oswald font-bold text-slate-100">{physicalInfo?.height || '--'}</span>
-                  )}
+              {isOffensiveLineman && onCompare && !completedPick && (
+                <div className="mb-6 md:mb-8 flex justify-end">
+                  <button 
+                    onClick={onCompare}
+                    className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-2"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    Compare
+                  </button>
                 </div>
-                <div className="bg-slate-800/50 p-3 md:p-4 rounded-xl border border-slate-700">
-                  <span className="block text-[9px] md:text-[10px] font-bold text-slate-500 uppercase mb-0.5 md:mb-1">Weight</span>
-                  {loadingPhysical ? (
-                    <div className="h-8 w-16 bg-slate-700 animate-pulse rounded"></div>
-                  ) : (
-                    <span className="text-xl md:text-2xl font-oswald font-bold text-slate-100">{physicalInfo?.weight || '--'}</span>
-                  )}
+              )}
+
+              <div className="my-6 md:my-8">
+                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 md:mb-4">Physical Measurements</h3>
+                <div className="grid grid-cols-2 gap-4 md:gap-6">
+                  <div className="bg-slate-800/50 p-3 md:p-4 rounded-xl border border-slate-700 text-center">
+                    <span className="block text-[9px] md:text-[10px] font-bold text-slate-500 uppercase mb-0.5 md:mb-1">Height</span>
+                    {loadingPhysical ? (
+                      <div className="h-8 w-16 bg-slate-700 animate-pulse rounded mx-auto"></div>
+                    ) : (
+                      <span className="text-xl md:text-2xl font-oswald font-bold text-slate-100">{physicalInfo?.height || '--'}</span>
+                    )}
+                  </div>
+                  <div className="bg-slate-800/50 p-3 md:p-4 rounded-xl border border-slate-700 text-center">
+                    <span className="block text-[9px] md:text-[10px] font-bold text-slate-500 uppercase mb-0.5 md:mb-1">Weight</span>
+                    {loadingPhysical ? (
+                      <div className="h-8 w-16 bg-slate-700 animate-pulse rounded mx-auto"></div>
+                    ) : (
+                      <span className="text-xl md:text-2xl font-oswald font-bold text-slate-100">{physicalInfo?.weight || '--'}</span>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              <div className="mb-6 md:mb-8">
+                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">Scouting Summary</h3>
+                <p className="text-slate-200 text-sm md:text-base leading-relaxed font-medium">
+                  {prospect.scoutingReport}
+                </p>
+              </div>
+
+              {(prospect.strengths?.length || 0) > 0 || (prospect.weaknesses?.length || 0) > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {prospect.strengths && prospect.strengths.length > 0 && (
+                    <div>
+                      <h3 className="text-[10px] md:text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3">Strengths</h3>
+                      <ul className="space-y-1.5">
+                        {prospect.strengths.map((s, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs md:text-sm text-slate-200">
+                            <span className="text-emerald-500 mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {prospect.weaknesses && prospect.weaknesses.length > 0 && (
+                    <div>
+                      <h3 className="text-[10px] md:text-xs font-bold text-red-500 uppercase tracking-widest mb-3">Weaknesses</h3>
+                      <ul className="space-y-1.5">
+                        {prospect.weaknesses.map((w, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs md:text-sm text-slate-200">
+                            <span className="text-red-500 mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            {w}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
 
-            <div className="flex-1 mb-6 md:mb-8">
-              <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">Scouting Summary</h3>
-              <p className="text-slate-200 text-sm md:text-base leading-relaxed font-medium">
-                {prospect.scoutingReport}
-              </p>
-            </div>
-
-            <div className="mt-auto">
+            {/* Fixed Bottom Action Area */}
+            <div className="mt-4 pt-4 border-t border-slate-800 bg-slate-900 shrink-0">
               {completedPick ? (
                 <div className="flex items-center gap-3 md:gap-4 p-4 md:p-5 bg-slate-800 border border-slate-700 rounded-xl md:rounded-2xl">
                   <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center p-1.5 md:p-2 bg-slate-900 rounded-lg">
-                    <img src={completedPick.team.logoUrl} className="max-w-full max-h-full" alt="" />
+                    <img src={completedPick.team.logoUrl} className="max-w-full max-h-full" alt={`${completedPick.team.name} Logo`} />
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wider">Drafted At Pick #{completedPick.pickNumber}</span>
@@ -320,7 +361,7 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
               ) : isUserTurn && currentTeam ? (
                 <div className="space-y-3 md:space-y-4">
                   <div className="flex items-center gap-3 p-3 md:p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                    <img src={currentTeam.logoUrl} className="w-8 h-8 md:w-10 md:h-10" alt="" />
+                    <img src={currentTeam.logoUrl} className="w-8 h-8 md:w-10 md:h-10" alt={`${currentTeam.name} Logo`} />
                     <div>
                       <span className="block text-[9px] md:text-[10px] font-bold text-emerald-500 uppercase">You are on the clock</span>
                       <span className="text-xs md:text-sm font-bold text-slate-200">Drafting for {currentTeam.name}</span>

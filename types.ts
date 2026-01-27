@@ -39,6 +39,8 @@ export interface Prospect {
   rank: number;
   scoutingReport?: string;
   stats?: PlayerStats;
+  strengths?: string[];
+  weaknesses?: string[];
 }
 
 export interface Team {
