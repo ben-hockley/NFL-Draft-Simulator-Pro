@@ -10,7 +10,11 @@
   },
   "dependencies": {
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "path": "^0.12.7",
+    "express": "^5.2.1",
+    "@supabase/supabase-js": "^2.93.3",
+    "url": "^0.11.4"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

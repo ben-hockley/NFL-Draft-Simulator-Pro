@@ -326,7 +326,7 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
             className="w-full max-w-sm h-10 lg:h-12 text-xs lg:text-sm uppercase font-oswald tracking-[0.2em]" 
             onClick={onRestart}
           >
-            Start New Simulation
+            Back to home
           </Button>
         </div>
       </div>
