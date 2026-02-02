@@ -201,6 +201,29 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
     );
   };
 
+  const renderStars = (rating: number | null | undefined) => {
+    if (rating === 0) {
+      return <span className="text-[10px] font-bold text-slate-500 uppercase">Not Ranked</span>;
+    }
+    if (rating === null || rating === undefined) return null;
+    
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <svg
+            key={s}
+            className={`w-4 h-4 ${s <= rating ? 'text-amber-400 fill-amber-400' : 'text-slate-700 fill-transparent'}`}
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl md:rounded-3xl overflow-y-auto md:overflow-hidden max-h-[95vh] md:max-h-[850px] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative">
@@ -253,6 +276,33 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
           {/* Right Column: Scrollable Content on desktop */}
           <div className="w-full md:w-1/2 p-5 md:p-8 lg:p-10 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 pb-6">
+              
+              {/* As a Recruit Section */}
+              {(prospect.recruitingStars !== null || prospect.link247) && (
+                <div className="mb-6 md:mb-8 bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                  <h3 className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">As a Recruit</h3>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {prospect.recruitingStars !== null && prospect.recruitingStars !== undefined && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black text-slate-500 uppercase">Rating:</span>
+                        {renderStars(prospect.recruitingStars)}
+                      </div>
+                    )}
+                    {prospect.link247 && (
+                      <a 
+                        href={prospect.link247} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-[10px] font-black text-emerald-400 uppercase tracking-widest hover:text-emerald-300 transition-colors bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        247Sports Profile
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {!isOffensiveLineman && (
                 <>
                   <div className="mb-6 md:mb-8 flex justify-between items-start">

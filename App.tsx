@@ -9,12 +9,13 @@ import { Summary } from './components/Summary';
 import { TradeModal } from './components/TradeModal';
 import { PlayerComparison } from './components/PlayerComparison';
 import { Button } from './components/Button';
+import { BigBoard } from './components/BigBoard';
 import { supabase } from './supabase';
 
 /**
  * Simple Homepage component
  */
-const HomePage: React.FC<{ onEnter: () => void }> = ({ onEnter }) => {
+const HomePage: React.FC<{ onStartDraft: () => void; onGoToBigBoard: () => void }> = ({ onStartDraft, onGoToBigBoard }) => {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
       <div className="max-w-4xl animate-fadeIn">
@@ -31,18 +32,30 @@ const HomePage: React.FC<{ onEnter: () => void }> = ({ onEnter }) => {
         </h1>
         
         <p className="text-slate-400 text-lg lg:text-2xl font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
-          2026 NFL Mock Draft simulator.
+          The most advanced 2026 NFL Mock Draft simulator. Explore the 2026 prospect big board or dive into a mock draft.
         </p>
 
-        <button 
-          onClick={onEnter}
-          className="inline-flex items-center gap-4 bg-emerald-500 hover:bg-emerald-400 text-white px-10 py-5 rounded-2xl text-xl lg:text-2xl font-black font-oswald uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-emerald-500/20"
-        >
-          Enter Draft Simulator
-          <svg className="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-        </button>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+          <button 
+            onClick={onStartDraft}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-4 bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-5 rounded-2xl text-xl lg:text-2xl font-black font-oswald uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-emerald-500/20"
+          >
+            Draft Simulator
+            <svg className="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
+
+          <button 
+            onClick={onGoToBigBoard}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-4 bg-slate-800 hover:bg-slate-700 text-white px-8 py-5 rounded-2xl text-xl lg:text-2xl font-black font-oswald uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-xl"
+          >
+            Big Board
+            <svg className="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </button>
+        </div>
 
         <div className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-4 opacity-50">
           <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
@@ -68,7 +81,13 @@ const HomePage: React.FC<{ onEnter: () => void }> = ({ onEnter }) => {
 };
 
 const App: React.FC = () => {
-  const [currentRoute, setCurrentRoute] = useState<string>(window.location.pathname);
+  // Helper to parse current path from hash or fallback to root
+  const getRouteFromHash = () => {
+    const hash = window.location.hash.replace('#', '');
+    return hash || '/home';
+  };
+
+  const [currentRoute, setCurrentRoute] = useState<string>(getRouteFromHash());
   const [view, setView] = useState<AppView>('LOBBY');
   const [userControlledTeams, setUserControlledTeams] = useState<string[]>([]);
   const [roundsToSimulate, setRoundsToSimulate] = useState<number>(1);
@@ -94,29 +113,25 @@ const App: React.FC = () => {
 
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
 
-  // Helper for internal routing without full page reload. 
-  // Wrapped in try-catch to avoid crashing if pushState is restricted (common in iframes).
+  // Helper for internal routing using Hashes for maximum refresh compatibility
   const handleNavigate = useCallback((path: string) => {
-    try {
-      window.history.pushState(null, '', path);
-    } catch (e) {
-      console.warn('URL update suppressed due to environment restrictions:', e);
-    }
+    window.location.hash = path;
     setCurrentRoute(path);
   }, []);
 
-  // Handle browser back/forward buttons
+  // Handle hash changes (back/forward or external link)
   useEffect(() => {
-    const handlePopState = () => {
-      setCurrentRoute(window.location.pathname);
+    const handleHashChange = () => {
+      setCurrentRoute(getRouteFromHash());
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Fetch prospects directly from Supabase only when navigating to /draftsim
+  // Fetch prospects directly from Supabase only when navigating to /draftsim or /bigboard
   useEffect(() => {
-    if (currentRoute !== '/draftsim' || state.prospects.length > 0) return;
+    const needsProspects = currentRoute === '/draftsim' || currentRoute === '/bigboard';
+    if (!needsProspects || state.prospects.length > 0) return;
 
     const fetchProspects = async () => {
       setIsLoadingProspects(true);
@@ -143,7 +158,9 @@ const App: React.FC = () => {
             headshotUrl: getEspnUrl(p.espnId || p.espnid),
             collegeLogoUrl: getCollegeLogoUrl(p.College || p.college),
             strengths: p.Strengths ? (typeof p.Strengths === 'string' ? p.Strengths.split(',').map((s: string) => s.trim()) : p.Strengths) : [],
-            weaknesses: p.Weaknesses ? (typeof p.Weaknesses === 'string' ? p.Weaknesses.split(',').map((s: string) => s.trim()) : p.Weaknesses) : []
+            weaknesses: p.Weaknesses ? (typeof p.Weaknesses === 'string' ? p.Weaknesses.split(',').map((s: string) => s.trim()) : p.Weaknesses) : [],
+            recruitingStars: p.RecruitingStars ?? p.recruiting_stars ?? null,
+            link247: p['247Link'] ?? p['247link'] ?? p.link247 ?? null
           }));
           setState(prev => ({ ...prev, prospects: mappedProspects }));
         } else {
@@ -183,7 +200,6 @@ const App: React.FC = () => {
 
   const restartApp = () => {
     handleNavigate('/home');
-    // Reset view state when returning home
     setView('LOBBY');
   };
 
@@ -358,41 +374,93 @@ const App: React.FC = () => {
     return pick ? { team: pick.team, pickNumber: pick.pickNumber } : null;
   }, [state.picks, selectedProspectId]);
 
-  // View Resolution
+  // View Resolution based on currentRoute
   const isHomeView = currentRoute === '/home' || currentRoute === '/';
   const isDraftView = currentRoute === '/draftsim';
+  const isBigBoardView = currentRoute === '/bigboard';
 
   if (isHomeView) {
-    return <HomePage onEnter={() => handleNavigate('/draftsim')} />;
+    return (
+      <HomePage 
+        onStartDraft={() => handleNavigate('/draftsim')} 
+        onGoToBigBoard={() => handleNavigate('/bigboard')} 
+      />
+    );
+  }
+
+  if (isLoadingProspects && state.prospects.length === 0) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white">
+        <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-6"></div>
+        <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-emerald-400">Loading Prospects...</h2>
+        <p className="text-slate-500 text-sm mt-2 animate-pulse">Syncing with scouting database</p>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white p-6">
+        <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
+          <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-red-400">Connection Failed</h2>
+        <p className="text-slate-500 text-sm mt-2 text-center max-w-md">{fetchError}</p>
+        <div className="flex gap-4 mt-8">
+          <Button variant="secondary" onClick={() => window.location.reload()}>Retry Connection</Button>
+          <Button variant="ghost" onClick={restartApp}>Exit to Home</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isBigBoardView) {
+    return (
+      <div className="h-screen flex flex-col overflow-hidden bg-slate-950">
+        <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 sticky top-0 z-40 shrink-0">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={restartApp}
+                className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </button>
+              <h1 className="text-xl lg:text-3xl font-black font-oswald text-white uppercase tracking-tighter">
+                Prospect <span className="text-emerald-500">Big Board</span>
+              </h1>
+            </div>
+            <Button variant="primary" onClick={() => handleNavigate('/draftsim')} className="hidden sm:flex">
+              Start Simulator
+            </Button>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-hidden">
+          <BigBoard 
+            prospects={state.prospects} 
+            onSelectProspect={(p) => setSelectedProspectId(p.id)} 
+          />
+        </main>
+
+        {selectedProspect && (
+          <PlayerDetail 
+            prospect={selectedProspect}
+            allProspects={state.prospects}
+            onClose={() => setSelectedProspectId(null)}
+            onDraft={(p) => {
+               handleNavigate('/draftsim');
+               setSelectedProspectId(null);
+            }}
+          />
+        )}
+      </div>
+    );
   }
 
   if (isDraftView) {
-    if (fetchError) {
-      return (
-        <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white p-6">
-          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
-            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-          </div>
-          <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-red-400">Connection Failed</h2>
-          <p className="text-slate-500 text-sm mt-2 text-center max-w-md">{fetchError}</p>
-          <div className="flex gap-4 mt-8">
-            <Button variant="secondary" onClick={() => window.location.reload()}>Retry Connection</Button>
-            <Button variant="ghost" onClick={restartApp}>Exit to Home</Button>
-          </div>
-        </div>
-      );
-    }
-
-    if (isLoadingProspects && state.prospects.length === 0) {
-      return (
-        <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white">
-          <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-6"></div>
-          <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-emerald-400">Loading Prospects...</h2>
-          <p className="text-slate-500 text-sm mt-2 animate-pulse">Syncing with scouting database</p>
-        </div>
-      );
-    }
-
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-slate-950">
         {view !== 'LOBBY' && (
@@ -637,8 +705,13 @@ const App: React.FC = () => {
     );
   }
 
-  // Fallback (e.g. invalid URL)
-  return <HomePage onEnter={() => handleNavigate('/draftsim')} />;
+  // Fallback
+  return (
+    <HomePage 
+      onStartDraft={() => handleNavigate('/draftsim')} 
+      onGoToBigBoard={() => handleNavigate('/bigboard')} 
+    />
+  );
 };
 
 export default App;

@@ -41,6 +41,8 @@ export interface Prospect {
   stats?: PlayerStats;
   strengths?: string[];
   weaknesses?: string[];
+  recruitingStars?: number | null;
+  link247?: string | null;
 }
 
 export interface Team {
@@ -60,7 +62,7 @@ export interface DraftPick {
   isTraded?: boolean;
 }
 
-export type AppView = 'LOBBY' | 'DRAFT' | 'SUMMARY';
+export type AppView = 'LOBBY' | 'DRAFT' | 'SUMMARY' | 'BIGBOARD';
 
 export interface PickAsset {
   year: 2026 | 2027;

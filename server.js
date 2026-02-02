@@ -58,15 +58,14 @@ app.use((req, res, next) => {
 app.use(express.static(__dirname));
 
 /**
- * SPA Support: Serve index.html for all main routes.
- * We avoid hard redirects (301/302) for the root path to prevent iframe navigation errors.
+ * SPA Support: Serve index.html for ALL routes that are not API calls or static files.
+ * This ensures that a browser refresh at any path (e.g. /draftsim) correctly loads the app shell.
  */
-app.get(['/', '/home', '/draftsim'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Catch-all: If it's not an asset or a known route, send to index.html
 app.get('*', (req, res) => {
+  // If it's a request for an API, don't serve index.html
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
