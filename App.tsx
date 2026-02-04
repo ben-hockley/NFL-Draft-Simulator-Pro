@@ -153,14 +153,16 @@ const App: React.FC = () => {
             name: p.Name || p.name || 'Unknown Player',
             college: p.College || p.college || 'Unknown College',
             position: p.Position || p.position || 'N/A',
-            scoutingReport: p['Scouting Report'] || p.scouting_report || p.scoutingReport || '',
+            summary: p.Summary || p.summary || '',
+            bio: p.Bio || p.bio || '',
             rank: p.rank || p.Rank || 999,
             headshotUrl: getEspnUrl(p.espnId || p.espnid),
             collegeLogoUrl: getCollegeLogoUrl(p.College || p.college),
             strengths: p.Strengths ? (typeof p.Strengths === 'string' ? p.Strengths.split(',').map((s: string) => s.trim()) : p.Strengths) : [],
             weaknesses: p.Weaknesses ? (typeof p.Weaknesses === 'string' ? p.Weaknesses.split(',').map((s: string) => s.trim()) : p.Weaknesses) : [],
             recruitingStars: p.RecruitingStars ?? p.recruiting_stars ?? null,
-            link247: p['247Link'] ?? p['247link'] ?? p.link247 ?? null
+            link247: p['247Link'] ?? p['247link'] ?? p.link247 ?? null,
+            nflComparison: p.NFLComparison ?? p.nfl_comparison ?? p.nflComparison ?? null
           }));
           setState(prev => ({ ...prev, prospects: mappedProspects }));
         } else {

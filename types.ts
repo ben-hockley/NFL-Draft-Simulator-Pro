@@ -37,12 +37,14 @@ export interface Prospect {
   height?: string;
   weight?: string;
   rank: number;
-  scoutingReport?: string;
+  summary?: string;
+  bio?: string;
   stats?: PlayerStats;
   strengths?: string[];
   weaknesses?: string[];
   recruitingStars?: number | null;
   link247?: string | null;
+  nflComparison?: string | null;
 }
 
 export interface Team {

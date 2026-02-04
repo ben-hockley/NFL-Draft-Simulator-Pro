@@ -358,11 +358,27 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
               </div>
 
               <div className="mb-6 md:mb-8">
-                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">Scouting Summary</h3>
-                <p className="text-slate-200 text-sm md:text-base leading-relaxed font-medium">
-                  {prospect.scoutingReport}
+                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">Play Style Summary</h3>
+                <p className="text-slate-200 text-sm md:text-base leading-relaxed font-bold italic">
+                  {prospect.summary || "Summary currently being analyzed."}
                 </p>
               </div>
+
+              <div className="mb-6 md:mb-8">
+                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">College Career & Bio</h3>
+                <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+                  {prospect.bio || "Career history and biography details are pending update."}
+                </p>
+              </div>
+
+              {prospect.nflComparison && (
+                <div className="mb-6 md:mb-8 bg-slate-800/20 p-4 rounded-xl border border-slate-700/30">
+                  <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">NFL Comparison</h3>
+                  <p className="text-lg md:text-xl font-black font-oswald text-emerald-400 uppercase tracking-tight">
+                    {prospect.nflComparison}
+                  </p>
+                </div>
+              )}
 
               {(prospect.strengths?.length || 0) > 0 || (prospect.weaknesses?.length || 0) > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
