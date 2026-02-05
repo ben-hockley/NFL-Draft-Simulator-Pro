@@ -10,7 +10,7 @@ interface BigBoardProps {
 }
 
 const POSITIONS: Position[] = ['QB', 'RB', 'WR', 'TE', 'OT', 'IOL', 'EDGE', 'DL', 'LB', 'CB', 'S', 'K', 'P', 'LS'];
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 24;
 
 type ViewMode = 'GRID' | 'TABLE';
 

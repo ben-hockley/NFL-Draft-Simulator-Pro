@@ -176,7 +176,8 @@ const COLLEGE_IDS: Record<string, number> = {
   "South Alabama": 6, 
   "FIU": 2229, 
   "Oregon State": 204,
-  "James Madison": 256
+  "James Madison": 256,
+  "New Mexico": 267
 };
 
 export const getEspnUrl = (id: number) => `https://a.espncdn.com/combiner/i?img=/i/headshots/college-football/players/full/${id}.png`;
