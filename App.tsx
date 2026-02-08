@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { AppView, DraftState, Prospect, Position, PickAsset, DraftSpeed } from './types';
-import { INITIAL_DRAFT_ORDER, TEAMS, getEspnUrl, getCollegeLogoUrl } from './constants';
-import { Lobby } from './components/Lobby';
-import { DraftBoard } from './components/DraftBoard';
-import { PlayerDetail } from './components/PlayerDetail';
-import { Summary } from './components/Summary';
-import { TradeModal } from './components/TradeModal';
-import { PlayerComparison } from './components/PlayerComparison';
-import { Button } from './components/Button';
-import { BigBoard } from './components/BigBoard';
-import { supabase } from './supabase';
+import { AppView, DraftState, Prospect, Position, PickAsset, DraftSpeed } from './types.ts';
+import { INITIAL_DRAFT_ORDER, TEAMS, getEspnUrl, getCollegeLogoUrl } from './constants.ts';
+import { Lobby } from './components/Lobby.tsx';
+import { DraftBoard } from './components/DraftBoard.tsx';
+import { PlayerDetail } from './components/PlayerDetail.tsx';
+import { Summary } from './components/Summary.tsx';
+import { TradeModal } from './components/TradeModal.tsx';
+import { PlayerComparison } from './components/PlayerComparison.tsx';
+import { Button } from './components/Button.tsx';
+import { BigBoard } from './components/BigBoard.tsx';
+import { supabase } from './supabase.ts';
 
 /**
  * Simple Homepage component
@@ -162,13 +162,16 @@ const App: React.FC = () => {
             weaknesses: p.Weaknesses ? (typeof p.Weaknesses === 'string' ? p.Weaknesses.split(',').map((s: string) => s.trim()) : p.Weaknesses) : [],
             recruitingStars: p.RecruitingStars ?? p.recruiting_stars ?? null,
             link247: p['247Link'] ?? p['247link'] ?? p.link247 ?? null,
-            nflComparison: p.NFLComparison ?? p.nfl_comparison ?? p.nflComparison ?? null
+            nflComparison: p.NFLComparison ?? p.nfl_comparison ?? p.nflComparison ?? null,
+            allAmerican: !!(p.all_american ?? p.AllAmerican ?? false),
+            nflBloodline: !!(p.nfl_bloodline ?? p.NFLBloodline ?? false),
+            freaksList: !!(p.freaks_list ?? p.FreaksList ?? false)
           }));
           setState(prev => ({ ...prev, prospects: mappedProspects }));
         } else {
           throw new Error("Received invalid data format from database");
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Frontend Fetch Error:', err.message);
         setFetchError(err.message);
       } finally {
@@ -603,7 +606,8 @@ const App: React.FC = () => {
               setRoundsToSimulate={setRoundsToSimulate}
               draftSpeed={draftSpeed}
               setDraftSpeed={setDraftSpeed}
-              onStart={startDraft} 
+              onStart={startDraft}
+              onBack={restartApp}
             />
           )}
 

@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { DraftState, Prospect, Position } from '../types';
-import { Button } from './Button';
-import { TEAMS } from '../constants';
+import { DraftState, Prospect, Position } from '../types.ts';
+import { Button } from './Button.tsx';
+import { TEAMS } from '../constants.ts';
 
 interface DraftBoardProps {
   state: DraftState;
@@ -67,7 +67,6 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
     return picksInScope.filter(p => p.team.id === teamTrackerFilter);
   }, [picksInScope, teamTrackerFilter]);
 
-  // Helper to calculate position rank based on all prospects
   const getPositionRank = (prospect: Prospect) => {
     const posProspects = state.prospects
       .filter(p => p.position === prospect.position)
@@ -76,7 +75,6 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
     return index + 1;
   };
 
-  // Auto-scroll the Draft Log to the current pick
   useEffect(() => {
     if (scrollRef.current && teamTrackerFilter === 'ALL') {
       const currentItem = scrollRef.current.querySelector(`[data-pick-index="${state.currentPickIndex}"]`);
@@ -168,10 +166,12 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
           </div>
 
           <div className="flex-1 overflow-auto">
-            <table className="w-full text-left table-fixed min-w-[600px] lg:min-w-0">
+            {/* Desktop View - HEADSHOT ADDED BETWEEN RK AND PLAYER */}
+            <table className="hidden md:table w-full text-left table-fixed">
               <thead className="sticky top-0 bg-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider z-10">
                 <tr>
                   <th className="px-4 py-2.5 w-14 lg:w-16">RK</th>
+                  <th className="px-4 py-2.5 w-20"></th>
                   <th className="px-4 py-2.5 w-40 lg:w-48">PLAYER</th>
                   <th className="px-4 py-2.5 w-28 lg:w-32">POS (RANK)</th>
                   <th className="px-4 py-2.5 w-28 lg:w-32">SCHOOL</th>
@@ -189,11 +189,19 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                   >
                     <td className="px-4 py-3 text-sm font-bold text-slate-500">#{prospect.rank}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden group-hover:ring-2 ring-emerald-500/30 transition-all flex-shrink-0">
-                          <img src={prospect.headshotUrl} alt="" className="w-full h-full object-cover" />
-                        </div>
+                      <div className="w-10 h-10 rounded-lg bg-slate-800 overflow-hidden border border-slate-700 p-0.5 shrink-0">
+                        <img src={prospect.headshotUrl} className="w-full h-full object-cover object-top" alt="" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-slate-100 truncate">{prospect.name}</span>
+                        <div className="flex gap-0.5">
+                          {prospect.recruitingStars === 5 && <span className="text-[10px]">⭐</span>}
+                          {prospect.allAmerican && <span className="text-[10px]">🛡️</span>}
+                          {prospect.nflBloodline && <span className="text-[10px]">🧬</span>}
+                          {prospect.freaksList && <span className="text-[10px]">👽</span>}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -230,6 +238,80 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                 ))}
               </tbody>
             </table>
+
+            {/* Mobile View - CUSTOM ROW LAYOUT */}
+            <div className="flex flex-col gap-2 p-2 md:hidden">
+              {filteredProspects.map(prospect => (
+                <div 
+                  key={prospect.id}
+                  onClick={() => onSelectProspect(prospect)}
+                  className={`bg-[#0f172a] border border-slate-800/80 rounded-xl p-3 flex items-center gap-4 active:bg-slate-800 transition-colors ${
+                    selectedProspectId === prospect.id ? 'ring-1 ring-emerald-500/50 bg-emerald-500/5' : ''
+                  }`}
+                >
+                  {/* Rank Column */}
+                  <div className="flex flex-col items-center justify-center min-w-[32px]">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-tighter">RK</span>
+                    <span className="text-lg font-black font-oswald text-slate-100 leading-none">#{prospect.rank}</span>
+                  </div>
+
+                  {/* Headshot */}
+                  <div className="w-12 h-12 bg-slate-800 rounded-lg overflow-hidden border border-slate-700 p-0.5 shrink-0">
+                    <img src={prospect.headshotUrl} className="w-full h-full object-cover object-top" alt="" />
+                  </div>
+
+                  {/* Info Column */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="text-sm font-black font-oswald text-white uppercase tracking-tight truncate max-w-[140px]">
+                        {prospect.name}
+                      </h3>
+                      <div className="flex gap-0.5 shrink-0">
+                        {prospect.recruitingStars === 5 && <span className="text-[10px]">⭐</span>}
+                        {prospect.allAmerican && <span className="text-[10px]">🛡️</span>}
+                        {prospect.nflBloodline && <span className="text-[10px]">🧬</span>}
+                        {prospect.freaksList && <span className="text-[10px]">👽</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase truncate">
+                        {prospect.college}
+                      </span>
+                      <span className="text-slate-700">|</span>
+                      <span className="text-[10px] font-black text-emerald-500 uppercase">
+                        {prospect.position}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="shrink-0">
+                    {isUserTurn ? (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDraftPlayer(prospect);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-500 border border-emerald-500/50 px-3 py-2 rounded-lg flex items-center gap-2 group active:scale-95 transition-all shadow-lg shadow-emerald-900/20"
+                      >
+                        <span className="text-[10px] font-black font-oswald text-white uppercase tracking-widest">Draft</span>
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <button className="bg-slate-800/80 border border-slate-700 px-3 py-2 rounded-lg flex items-center gap-2 group">
+                        <span className="text-[10px] font-black font-oswald text-slate-300 uppercase tracking-widest">Info</span>
+                        <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {filteredProspects.length === 0 && (
               <div className="py-20 text-center text-slate-500">
                 No prospects found matching these filters.
@@ -264,12 +346,10 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
             <div className="p-3 space-y-1.5">
               {filteredTrackerPicks.map((pick, index) => {
                 const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
-                // Use scope-based index for visual highlighting
                 const scopeIndex = picksInScope.findIndex(p => p.pickNumber === pick.pickNumber);
                 const isCurrent = scopeIndex === state.currentPickIndex;
                 const isCompleted = !!pick.selectedPlayerId;
 
-                // Check for round transition
                 const showRoundSeparator = index === 0 || filteredTrackerPicks[index - 1].round !== pick.round;
 
                 return (

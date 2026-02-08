@@ -242,7 +242,7 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
           <div className="w-full md:w-1/2 bg-slate-800 relative h-[250px] md:h-full shrink-0">
             <img 
               src={prospect.headshotUrl} 
-              alt={`${prospect.name} headshot - ${prospect.college} ${prospect.position} prospect profile`} 
+              alt={`${prospect.name} headshot`} 
               className="w-full h-full object-cover object-top opacity-80"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
@@ -255,8 +255,14 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
                   #{positionRank} RANKED {prospect.position}
                 </span>
               </div>
-              <h2 className="text-3xl md:text-5xl font-black font-oswald text-white uppercase leading-none tracking-tight">
+              <h2 className="text-3xl md:text-5xl font-black font-oswald text-white uppercase leading-none tracking-tight flex items-center flex-wrap gap-x-4">
                 {prospect.name}
+                <div className="flex gap-2 text-2xl md:text-3xl">
+                  {prospect.recruitingStars === 5 && <span title="5-Star Recruit">⭐</span>}
+                  {prospect.allAmerican && <span title="NCAA All-American">🛡️</span>}
+                  {prospect.nflBloodline && <span title="NFL Bloodline">🧬</span>}
+                  {prospect.freaksList && <span title="Freaks List">👽</span>}
+                </div>
               </h2>
               <div className="flex items-center gap-3 md:gap-4 mt-1 md:mt-2 text-emerald-400 font-bold uppercase tracking-widest text-sm md:text-lg">
                 <span>{prospect.position}</span>

@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { TEAMS } from '../constants';
-import { Button } from './Button';
-import { Team, DraftSpeed } from '../types';
+import { TEAMS } from '../constants.ts';
+import { Button } from './Button.tsx';
+import { Team, DraftSpeed } from '../types.ts';
 
 interface LobbyProps {
   userControlledTeams: string[];
@@ -12,6 +12,7 @@ interface LobbyProps {
   draftSpeed: DraftSpeed;
   setDraftSpeed: (speed: DraftSpeed) => void;
   onStart: () => void;
+  onBack?: () => void;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({ 
@@ -21,7 +22,8 @@ export const Lobby: React.FC<LobbyProps> = ({
   setRoundsToSimulate,
   draftSpeed,
   setDraftSpeed,
-  onStart 
+  onStart,
+  onBack
 }) => {
   const sortedTeams = useMemo(() => 
     [...TEAMS].sort((a, b) => a.name.localeCompare(b.name)),
@@ -42,12 +44,24 @@ export const Lobby: React.FC<LobbyProps> = ({
   return (
     <div className="h-full w-full flex flex-col animate-fadeIn overflow-hidden bg-slate-950">
       {/* Header Section - Compact and Fixed */}
-      <header className="text-center py-3 lg:py-6 shrink-0 bg-slate-900/30 border-b border-slate-800/50">
-        <h1 className="text-2xl lg:text-4xl font-black font-oswald text-emerald-400 uppercase tracking-tight">
-          SundayScouts.com 2026 NFL Draft Simulator
+      <header className="relative text-center py-4 lg:py-8 shrink-0 bg-slate-900/30 border-b border-slate-800/50">
+        {onBack && (
+          <button 
+            onClick={onBack}
+            className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 p-2 lg:p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all group flex items-center gap-2"
+            title="Back to Home"
+          >
+            <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Home</span>
+          </button>
+        )}
+        <h1 className="text-xl lg:text-4xl font-black font-oswald text-emerald-400 uppercase tracking-tight">
+          SundayScouts.com <span className="text-white">Draft Setup</span>
         </h1>
-        <p className="text-slate-400 text-[10px] lg:text-sm">
-          Select your team(s)
+        <p className="text-slate-500 text-[10px] lg:text-sm font-bold uppercase tracking-[0.2em] mt-1">
+          2026 NFL Draft Simulation
         </p>
       </header>
 

@@ -45,6 +45,9 @@ export interface Prospect {
   recruitingStars?: number | null;
   link247?: string | null;
   nflComparison?: string | null;
+  allAmerican?: boolean;
+  nflBloodline?: boolean;
+  freaksList?: boolean;
 }
 
 export interface Team {
