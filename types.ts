@@ -48,6 +48,7 @@ export interface Prospect {
   allAmerican?: boolean;
   nflBloodline?: boolean;
   freaksList?: boolean;
+  draftYear: number;
 }
 
 export interface Team {

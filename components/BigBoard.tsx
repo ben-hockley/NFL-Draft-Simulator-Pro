@@ -17,6 +17,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
   const [searchTerm, setSearchTerm] = useState('');
   const [posFilter, setPosFilter] = useState<Position | 'ALL'>('ALL');
   const [collegeFilter, setCollegeFilter] = useState('ALL');
+  const [draftYearFilter, setDraftYearFilter] = useState<number>(2026);
   const [only5Star, setOnly5Star] = useState(false);
   const [onlyAllAmerican, setOnlyAllAmerican] = useState(false);
   const [onlyBloodline, setOnlyBloodline] = useState(false);
@@ -26,8 +27,8 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
   const [currentPage, setCurrentPage] = useState(1);
 
   const uniqueColleges = useMemo(() => {
-    return Array.from(new Set(prospects.map(p => p.college))).sort();
-  }, [prospects]);
+    return Array.from(new Set(prospects.filter(p => p.draftYear === draftYearFilter).map(p => p.college))).sort();
+  }, [prospects, draftYearFilter]);
 
   const activeAttributeCount = useMemo(() => {
     let count = 0;
@@ -40,6 +41,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
 
   const filteredProspects = useMemo(() => {
     return prospects.filter(p => {
+      const matchesYear = p.draftYear === draftYearFilter;
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesPos = posFilter === 'ALL' || p.position === posFilter;
       const matchesCollege = collegeFilter === 'ALL' || p.college === collegeFilter;
@@ -47,14 +49,14 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
       const matchesAllAmerican = !onlyAllAmerican || p.allAmerican;
       const matchesBloodline = !onlyBloodline || p.nflBloodline;
       const matchesFreaks = !onlyFreaks || p.freaksList;
-      return matchesSearch && matchesPos && matchesCollege && matches5Star && matchesAllAmerican && matchesBloodline && matchesFreaks;
+      return matchesYear && matchesSearch && matchesPos && matchesCollege && matches5Star && matchesAllAmerican && matchesBloodline && matchesFreaks;
     });
-  }, [prospects, searchTerm, posFilter, collegeFilter, only5Star, onlyAllAmerican, onlyBloodline, onlyFreaks]);
+  }, [prospects, searchTerm, posFilter, collegeFilter, only5Star, onlyAllAmerican, onlyBloodline, onlyFreaks, draftYearFilter]);
 
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, posFilter, collegeFilter, only5Star, onlyAllAmerican, onlyBloodline, onlyFreaks]);
+  }, [searchTerm, posFilter, collegeFilter, only5Star, onlyAllAmerican, onlyBloodline, onlyFreaks, draftYearFilter]);
 
   const totalPages = Math.ceil(filteredProspects.length / PAGE_SIZE);
   
@@ -65,7 +67,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
 
   const getPositionRank = (prospect: Prospect) => {
     const posProspects = prospects
-      .filter(p => p.position === prospect.position)
+      .filter(p => p.position === prospect.position && p.draftYear === draftYearFilter)
       .sort((a, b) => a.rank - b.rank);
     return posProspects.findIndex(p => p.id === prospect.id) + 1;
   };
@@ -86,6 +88,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
     setOnlyAllAmerican(false);
     setOnlyBloodline(false);
     setOnlyFreaks(false);
+    // Draft year filter is purposefully NOT reset
   };
 
   return (
@@ -94,6 +97,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
       <div className="bg-slate-900/50 border-b border-slate-800 px-6 py-4 shrink-0">
         <div className="max-w-7xl mx-auto flex flex-col gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4">
+            
             {/* Search */}
             <div className="flex-1 relative w-full">
               <input 
@@ -109,7 +113,8 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
             </div>
 
             <div className="flex flex-wrap md:flex-nowrap items-center gap-4 w-full md:w-auto">
-              <div className="flex-1 md:w-48">
+              
+              <div className="flex-1 md:w-32">
                 <select 
                   value={posFilter}
                   onChange={(e) => setPosFilter(e.target.value as Position | 'ALL')}
@@ -120,7 +125,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                 </select>
               </div>
 
-              <div className="flex-1 md:w-64">
+              <div className="flex-1 md:w-48">
                 <select 
                   value={collegeFilter}
                   onChange={(e) => setCollegeFilter(e.target.value)}
@@ -129,6 +134,18 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                   <option value="ALL">All Colleges</option>
                   {uniqueColleges.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+              </div>
+
+              {/* Draft Year Dropdown */}
+              <div className="flex-1 md:w-36 shrink-0">
+                 <select 
+                    value={draftYearFilter}
+                    onChange={(e) => setDraftYearFilter(Number(e.target.value))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs uppercase"
+                  >
+                    <option value={2026}>2026 Draft</option>
+                    <option value={2027}>2027 Draft</option>
+                  </select>
               </div>
 
               {/* View Toggle */}
@@ -244,6 +261,12 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                         </span>
                         <span className="bg-slate-700/80 backdrop-blur-sm text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded uppercase">
                           POS RK #{getPositionRank(prospect)}
+                        </span>
+                      </div>
+
+                      <div className="absolute top-3 right-3 z-20">
+                        <span className="bg-slate-900/80 backdrop-blur-md border border-slate-700 text-slate-300 text-[10px] font-black px-2 py-1 rounded shadow-lg uppercase tracking-widest">
+                          {prospect.draftYear}
                         </span>
                       </div>
 
@@ -413,7 +436,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                       {/* Action Button */}
                       <div className="shrink-0">
                         <button className="bg-slate-800/80 border border-slate-700 px-3 py-2 rounded-lg flex items-center gap-2 group">
-                          <span className="text-[10px] font-black font-oswald text-slate-300 uppercase tracking-widest">Draft</span>
+                          <span className="text-[10px] font-black font-oswald text-slate-300 uppercase tracking-widest">View</span>
                           <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                           </svg>

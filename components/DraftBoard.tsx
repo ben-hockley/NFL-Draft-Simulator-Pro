@@ -42,13 +42,14 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
     [state.picks]
   );
 
+  // Filter available prospects for Draft Simulator - strictly 2026 class
   const availableProspects = useMemo(() => 
-    state.prospects.filter(p => !draftedPlayerIds.includes(p.id)),
+    state.prospects.filter(p => !draftedPlayerIds.includes(p.id) && p.draftYear === 2026),
     [state.prospects, draftedPlayerIds]
   );
 
   const uniqueColleges = useMemo(() => {
-    const colleges = Array.from(new Set(state.prospects.map(p => p.college)));
+    const colleges = Array.from(new Set(state.prospects.filter(p => p.draftYear === 2026).map(p => p.college)));
     return colleges.sort();
   }, [state.prospects]);
 
@@ -70,7 +71,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
 
   const getPositionRank = (prospect: Prospect) => {
     const posProspects = state.prospects
-      .filter(p => p.position === prospect.position)
+      .filter(p => p.position === prospect.position && p.draftYear === 2026)
       .sort((a, b) => a.rank - b.rank);
     const index = posProspects.findIndex(p => p.id === prospect.id);
     return index + 1;

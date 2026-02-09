@@ -225,7 +225,8 @@ const App: React.FC = () => {
               nflComparison: p.NFLComparison ?? p.nfl_comparison ?? p.nflComparison ?? null,
               allAmerican: !!(p.all_american ?? p.AllAmerican ?? false),
               nflBloodline: !!(p.nfl_bloodline ?? p.NFLBloodline ?? false),
-              freaksList: !!(p.freaks_list ?? p.FreaksList ?? false)
+              freaksList: !!(p.freaks_list ?? p.FreaksList ?? false),
+              draftYear: p.draft_year || p.DraftYear || 2026,
             };
           });
           setState(prev => ({ ...prev, prospects: mappedProspects }));
@@ -378,8 +379,9 @@ const App: React.FC = () => {
       
       const timer = setTimeout(() => {
         const draftedIds = state.picks.map(p => p.selectedPlayerId).filter(Boolean);
+        // CRITICAL: Simulator ONLY sees 2026 prospects
         const available = state.prospects
-          .filter(p => !draftedIds.includes(p.id))
+          .filter(p => !draftedIds.includes(p.id) && p.draftYear === 2026)
           .sort((a, b) => a.rank - b.rank);
 
         if (available.length > 0) {
@@ -523,9 +525,7 @@ const App: React.FC = () => {
                 Prospect <span className="text-emerald-500">Big Board</span>
               </h1>
             </div>
-            <Button variant="primary" onClick={() => handleNavigate('/draftsim')} className="hidden sm:flex">
-              Start Simulator
-            </Button>
+            {/* Start Simulator button removed as per request to be replaced by dropdown in BigBoard */}
           </div>
         </header>
 
@@ -541,6 +541,7 @@ const App: React.FC = () => {
             prospect={selectedProspect}
             allProspects={state.prospects}
             onClose={() => setSelectedProspectId(null)}
+            showDraftYear={true}
             onDraft={(p) => {
                handleNavigate('/draftsim');
                setSelectedProspectId(null);

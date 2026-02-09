@@ -12,6 +12,7 @@ interface PlayerDetailProps {
   onClose: () => void;
   onCompare?: () => void;
   completedPick?: { team: Team; pickNumber: number };
+  showDraftYear?: boolean;
 }
 
 type ProfileTab = 'SCOUTING' | 'STATS' | 'BIO';
@@ -45,7 +46,8 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
   onDraft,
   onClose,
   onCompare,
-  completedPick
+  completedPick,
+  showDraftYear
 }) => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('SCOUTING');
   const [stats, setStats] = useState<PlayerStats | null>(null);
@@ -177,6 +179,11 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
                 <span className="bg-slate-700/80 text-slate-200 text-[8px] sm:text-[10px] lg:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full uppercase tracking-widest">
                   #{positionRank} {fullPositionName}
                 </span>
+                {showDraftYear && (
+                   <span className="bg-slate-700/80 text-slate-200 text-[8px] sm:text-[10px] lg:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full uppercase tracking-widest border border-slate-600">
+                    {prospect.draftYear} Draft
+                  </span>
+                )}
               </div>
               <h1 className="text-xl sm:text-3xl lg:text-6xl font-black font-oswald text-white uppercase tracking-tighter leading-none mb-1 sm:mb-2 truncate">
                 {prospect.name}
