@@ -1,10 +1,10 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { DraftState, Prospect, Position } from '../types.ts';
+import { DraftState, Prospect, Position, Team } from '../types.ts';
 import { Button } from './Button.tsx';
-import { TEAMS } from '../constants.ts';
 
 interface DraftBoardProps {
+  teams: Team[];
   state: DraftState;
   onDraftPlayer: (prospect: Prospect) => void;
   onSelectProspect: (prospect: Prospect) => void;
@@ -16,6 +16,7 @@ const POSITIONS: Position[] = ['QB', 'RB', 'WR', 'TE', 'OT', 'IOL', 'EDGE', 'DL'
 type BoardTab = 'PROSPECTS' | 'TRACKER';
 
 export const DraftBoard: React.FC<DraftBoardProps> = ({ 
+  teams,
   state, 
   onDraftPlayer, 
   onSelectProspect,
@@ -28,8 +29,8 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const sortedTeams = useMemo(() => 
-    [...TEAMS].sort((a, b) => a.name.localeCompare(b.name)),
-    []
+    [...teams].sort((a, b) => a.name.localeCompare(b.name)),
+    [teams]
   );
 
   const picksInScope = useMemo(() => state.picks.filter(p => p.round <= state.roundsToSimulate), [state.picks, state.roundsToSimulate]);

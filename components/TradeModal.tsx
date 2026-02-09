@@ -2,9 +2,10 @@
 import React, { useState, useMemo } from 'react';
 import { Team, PickAsset, DraftPick } from '../types';
 import { Button } from './Button';
-import { getPickValue, getFutureRoundValue, TEAMS } from '../constants';
+import { getPickValue, getFutureRoundValue } from '../constants';
 
 interface TradeModalProps {
+  teams: Team[];
   userTeamId: string;
   currentPicks: DraftPick[];
   futurePicks: Record<string, number[]>;
@@ -13,6 +14,7 @@ interface TradeModalProps {
 }
 
 export const TradeModal: React.FC<TradeModalProps> = ({
+  teams,
   userTeamId,
   currentPicks,
   futurePicks,
@@ -20,8 +22,8 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   onTrade
 }) => {
   const sortedPartnerTeams = useMemo(() => 
-    [...TEAMS].filter(t => t.id !== userTeamId).sort((a, b) => a.name.localeCompare(b.name)),
-    [userTeamId]
+    [...teams].filter(t => t.id !== userTeamId).sort((a, b) => a.name.localeCompare(b.name)),
+    [userTeamId, teams]
   );
 
   const [selectedCpuTeamId, setSelectedCpuTeamId] = useState<string>(
@@ -31,8 +33,8 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const [cpuSelectedAssets, setCpuSelectedAssets] = useState<PickAsset[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
-  const cpuTeam = TEAMS.find(t => t.id === selectedCpuTeamId)!;
-  const initiatorTeam = TEAMS.find(t => t.id === userTeamId)!;
+  const cpuTeam = teams.find(t => t.id === selectedCpuTeamId)!;
+  const initiatorTeam = teams.find(t => t.id === userTeamId)!;
 
   const getUserAssets = useMemo(() => {
     const assets: PickAsset[] = [];

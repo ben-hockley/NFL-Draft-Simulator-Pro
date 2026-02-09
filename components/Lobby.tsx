@@ -1,10 +1,10 @@
 
-import React, { useState, useMemo } from 'react';
-import { TEAMS } from '../constants.ts';
+import React, { useMemo } from 'react';
 import { Button } from './Button.tsx';
 import { Team, DraftSpeed } from '../types.ts';
 
 interface LobbyProps {
+  teams: Team[];
   userControlledTeams: string[];
   setUserControlledTeams: (ids: string[]) => void;
   roundsToSimulate: number;
@@ -16,6 +16,7 @@ interface LobbyProps {
 }
 
 export const Lobby: React.FC<LobbyProps> = ({ 
+  teams,
   userControlledTeams, 
   setUserControlledTeams, 
   roundsToSimulate,
@@ -26,8 +27,8 @@ export const Lobby: React.FC<LobbyProps> = ({
   onBack
 }) => {
   const sortedTeams = useMemo(() => 
-    [...TEAMS].sort((a, b) => a.name.localeCompare(b.name)),
-    []
+    [...teams].sort((a, b) => a.name.localeCompare(b.name)),
+    [teams]
   );
 
   const toggleTeam = (teamId: string) => {
@@ -38,7 +39,7 @@ export const Lobby: React.FC<LobbyProps> = ({
     }
   };
 
-  const selectAll = () => setUserControlledTeams(TEAMS.map(t => t.id));
+  const selectAll = () => setUserControlledTeams(teams.map(t => t.id));
   const deselectAll = () => setUserControlledTeams([]);
 
   return (

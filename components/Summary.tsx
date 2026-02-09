@@ -2,9 +2,9 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { DraftState, Prospect, Team } from '../types';
 import { Button } from './Button';
-import { TEAMS } from '../constants';
 
 interface SummaryProps {
+  teams: Team[];
   state: DraftState;
   onRestart: () => void;
   onSelectProspect: (prospect: Prospect) => void;
@@ -22,15 +22,15 @@ const getGradeColor = (grade: string) => {
   return 'text-red-400 bg-red-500/20 border-red-500/40';
 };
 
-export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectProspect }) => {
+export const Summary: React.FC<SummaryProps> = ({ teams, state, onRestart, onSelectProspect }) => {
   const [activeTab, setActiveTab] = useState<SummaryTab>('RESULTS');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   
   const sortedUserTeams = useMemo(() => 
     [...state.userControlledTeams]
-      .map(tid => TEAMS.find(t => t.id === tid)!)
+      .map(tid => teams.find(t => t.id === tid)!)
       .sort((a, b) => a.name.localeCompare(b.name)),
-    [state.userControlledTeams]
+    [state.userControlledTeams, teams]
   );
 
   const [selectedMyPicksTeamId, setSelectedMyPicksTeamId] = useState<string>(
@@ -107,7 +107,7 @@ export const Summary: React.FC<SummaryProps> = ({ state, onRestart, onSelectPros
   };
 
   const firstRoundPicks = state.picks.filter(p => p.round === 1).slice(0, 32);
-  const selectedTeamData = TEAMS.find(t => t.id === selectedMyPicksTeamId);
+  const selectedTeamData = teams.find(t => t.id === selectedMyPicksTeamId);
 
   return (
     <div className="h-full w-full flex flex-col p-2 lg:p-6 bg-slate-950 overflow-hidden animate-fadeIn">

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { AppView, DraftState, Prospect, Position, PickAsset, DraftSpeed } from './types.ts';
-import { INITIAL_DRAFT_ORDER, TEAMS, getEspnUrl, getCollegeLogoUrl } from './constants.ts';
+import { AppView, DraftState, Prospect, Position, PickAsset, DraftSpeed, Team } from './types.ts';
+import { getEspnUrl, getCollegeLogoUrl } from './constants.ts';
 import { Lobby } from './components/Lobby.tsx';
 import { DraftBoard } from './components/DraftBoard.tsx';
 import { PlayerDetail } from './components/PlayerDetail.tsx';
@@ -99,10 +99,17 @@ const App: React.FC = () => {
   const [comparisonBasePlayer, setComparisonBasePlayer] = useState<Prospect | null>(null);
   const [isLoadingProspects, setIsLoadingProspects] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  
+  // Teams Data Management
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(true);
+
+  // Draft Order Data Management
+  const [draftOrder, setDraftOrder] = useState<any[]>([]);
 
   const [state, setState] = useState<DraftState>({
     currentPickIndex: 0,
-    picks: INITIAL_DRAFT_ORDER,
+    picks: [], // Initialized empty, populated after teams load and draft starts
     userControlledTeams: [],
     isDraftStarted: false,
     prospects: [],
@@ -128,6 +135,45 @@ const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Fetch Teams and Draft Order immediately on mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setIsLoadingTeams(true);
+      try {
+        const [teamsResult, orderResult] = await Promise.all([
+           supabase.from('NFL_Teams').select('*'),
+           supabase.from('draft_order').select('*').order('pick', { ascending: true })
+        ]);
+        
+        if (teamsResult.error) throw teamsResult.error;
+        if (orderResult.error) throw orderResult.error;
+        
+        if (teamsResult.data) {
+          const mappedTeams: Team[] = teamsResult.data.map((t: any) => ({
+            id: t.short_name, // Map short_name from DB to id for frontend compatibility
+            name: t.name,
+            nickname: t.nickname,
+            logoUrl: t.logoUrl,
+            color: t.color,
+            needs: t.needs // Assuming needs is stored as JSON array in Supabase
+          }));
+          setTeams(mappedTeams);
+        }
+
+        if (orderResult.data) {
+           setDraftOrder(orderResult.data);
+        }
+
+      } catch (err: any) {
+        console.error('Error fetching initial data:', err.message);
+        setFetchError('Failed to load NFL teams or draft order data.');
+      } finally {
+        setIsLoadingTeams(false);
+      }
+    };
+    fetchInitialData();
+  }, []);
+
   // Fetch prospects directly from Supabase only when navigating to /draftsim or /bigboard
   useEffect(() => {
     const needsProspects = currentRoute === '/draftsim' || currentRoute === '/bigboard';
@@ -137,36 +183,51 @@ const App: React.FC = () => {
       setIsLoadingProspects(true);
       setFetchError(null);
       try {
-        const { data, error } = await supabase
-          .from('prospects')
-          .select('*')
-          .order('rank', { ascending: true });
+        const [prospectsResult, collegesResult] = await Promise.all([
+           supabase.from('prospects').select('*').order('rank', { ascending: true }),
+           supabase.from('Colleges').select('*')
+        ]);
         
-        if (error) {
-          throw new Error(`Database error: ${error.message}`);
+        if (prospectsResult.error) {
+          throw new Error(`Database error: ${prospectsResult.error.message}`);
         }
 
+        const collegeMap: Record<string, number> = {};
+        if (collegesResult.data) {
+           collegesResult.data.forEach((c: any) => {
+               if (c.college && c.espn_id) {
+                   collegeMap[c.college] = c.espn_id;
+               }
+           });
+        }
+
+        const data = prospectsResult.data;
         if (Array.isArray(data)) {
-          const mappedProspects: Prospect[] = data.map((p: any) => ({
-            id: (p.id || p.ID || '').toString(),
-            espnId: p.espnId || p.espnid || 0,
-            name: p.Name || p.name || 'Unknown Player',
-            college: p.College || p.college || 'Unknown College',
-            position: p.Position || p.position || 'N/A',
-            summary: p.Summary || p.summary || '',
-            bio: p.Bio || p.bio || '',
-            rank: p.rank || p.Rank || 999,
-            headshotUrl: getEspnUrl(p.espnId || p.espnid),
-            collegeLogoUrl: getCollegeLogoUrl(p.College || p.college),
-            strengths: p.Strengths ? (typeof p.Strengths === 'string' ? p.Strengths.split(',').map((s: string) => s.trim()) : p.Strengths) : [],
-            weaknesses: p.Weaknesses ? (typeof p.Weaknesses === 'string' ? p.Weaknesses.split(',').map((s: string) => s.trim()) : p.Weaknesses) : [],
-            recruitingStars: p.RecruitingStars ?? p.recruiting_stars ?? null,
-            link247: p['247Link'] ?? p['247link'] ?? p.link247 ?? null,
-            nflComparison: p.NFLComparison ?? p.nfl_comparison ?? p.nflComparison ?? null,
-            allAmerican: !!(p.all_american ?? p.AllAmerican ?? false),
-            nflBloodline: !!(p.nfl_bloodline ?? p.NFLBloodline ?? false),
-            freaksList: !!(p.freaks_list ?? p.FreaksList ?? false)
-          }));
+          const mappedProspects: Prospect[] = data.map((p: any) => {
+            const collegeName = p.College || p.college || 'Unknown College';
+            const collegeId = collegeMap[collegeName];
+
+            return {
+              id: (p.id || p.ID || '').toString(),
+              espnId: p.espnId || p.espnid || 0,
+              name: p.Name || p.name || 'Unknown Player',
+              college: collegeName,
+              position: p.Position || p.position || 'N/A',
+              summary: p.Summary || p.summary || '',
+              bio: p.Bio || p.bio || '',
+              rank: p.rank || p.Rank || 999,
+              headshotUrl: getEspnUrl(p.espnId || p.espnid),
+              collegeLogoUrl: getCollegeLogoUrl(collegeId, collegeName),
+              strengths: p.Strengths ? (typeof p.Strengths === 'string' ? p.Strengths.split(',').map((s: string) => s.trim()) : p.Strengths) : [],
+              weaknesses: p.Weaknesses ? (typeof p.Weaknesses === 'string' ? p.Weaknesses.split(',').map((s: string) => s.trim()) : p.Weaknesses) : [],
+              recruitingStars: p.RecruitingStars ?? p.recruiting_stars ?? null,
+              link247: p['247Link'] ?? p['247link'] ?? p.link247 ?? null,
+              nflComparison: p.NFLComparison ?? p.nfl_comparison ?? p.nflComparison ?? null,
+              allAmerican: !!(p.all_american ?? p.AllAmerican ?? false),
+              nflBloodline: !!(p.nfl_bloodline ?? p.NFLBloodline ?? false),
+              freaksList: !!(p.freaks_list ?? p.FreaksList ?? false)
+            };
+          });
           setState(prev => ({ ...prev, prospects: mappedProspects }));
         } else {
           throw new Error("Received invalid data format from database");
@@ -183,9 +244,31 @@ const App: React.FC = () => {
   }, [currentRoute, state.prospects.length]);
 
   const startDraft = () => {
-    const allPicks = INITIAL_DRAFT_ORDER;
+    // Generate Draft Order from Fetched Draft Order + Teams Data
+    const allPicks = draftOrder.map((pick) => {
+        const team = teams.find(t => t.id === pick.short_name);
+        if (!team) {
+            console.error(`Team not found for ID: ${pick.short_name}`);
+            // Fallback to prevent crash, using first team as placeholder
+            return {
+                pickNumber: pick.pick,
+                round: pick.round,
+                team: teams[0], 
+                selectedPlayerId: undefined,
+                isTraded: false
+            };
+        }
+        return {
+            pickNumber: pick.pick,
+            round: pick.round,
+            team: team,
+            selectedPlayerId: undefined,
+            isTraded: false
+        };
+    });
+
     const futurePicks: Record<string, number[]> = {};
-    TEAMS.forEach(t => {
+    teams.forEach(t => {
       futurePicks[t.id] = [1, 2, 3, 4, 5, 6, 7];
     });
 
@@ -196,7 +279,7 @@ const App: React.FC = () => {
       currentPickIndex: 0,
       roundsToSimulate,
       draftSpeed,
-      picks: allPicks.map(p => ({ ...p, selectedPlayerId: undefined, isTraded: false })),
+      picks: allPicks,
       futurePicks
     });
     setIsSimulationPaused(false);
@@ -239,8 +322,8 @@ const App: React.FC = () => {
     setState(prev => {
       const newPicks = [...prev.picks];
       const newFuturePicks = { ...prev.futurePicks };
-      const cpuTeam = TEAMS.find(t => t.id === targetTeamId)!;
-      const userTeam = TEAMS.find(t => t.id === initiatorId)!;
+      const cpuTeam = teams.find(t => t.id === targetTeamId)!;
+      const userTeam = teams.find(t => t.id === initiatorId)!;
 
       userAssets.filter(a => a.year === 2026).forEach(asset => {
         const idx = newPicks.findIndex(p => p.pickNumber === asset.pickNumber);
@@ -369,8 +452,8 @@ const App: React.FC = () => {
   );
 
   const sortedUserTeams = useMemo(() => 
-    [...userControlledTeams].map(tid => TEAMS.find(t => t.id === tid)!).sort((a, b) => a.name.localeCompare(b.name)),
-    [userControlledTeams]
+    [...userControlledTeams].map(tid => teams.find(t => t.id === tid)!).sort((a, b) => a.name.localeCompare(b.name)),
+    [userControlledTeams, teams]
   );
 
   const selectionInfo = useMemo(() => {
@@ -393,12 +476,15 @@ const App: React.FC = () => {
     );
   }
 
-  if (isLoadingProspects && state.prospects.length === 0) {
+  // Combine loading states for critical initial data
+  if ((isLoadingProspects && state.prospects.length === 0) || (isLoadingTeams && teams.length === 0) || draftOrder.length === 0) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white">
         <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-6"></div>
-        <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-emerald-400">Loading Prospects...</h2>
-        <p className="text-slate-500 text-sm mt-2 animate-pulse">Syncing with scouting database</p>
+        <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-emerald-400">Loading Data...</h2>
+        <p className="text-slate-500 text-sm mt-2 animate-pulse">
+           {isLoadingTeams || draftOrder.length === 0 ? 'Fetching NFL Teams & Order...' : 'Syncing Prospects...'}
+        </p>
       </div>
     );
   }
@@ -600,6 +686,7 @@ const App: React.FC = () => {
         <main className="flex-1 overflow-hidden">
           {view === 'LOBBY' && (
             <Lobby 
+              teams={teams}
               userControlledTeams={userControlledTeams} 
               setUserControlledTeams={setUserControlledTeams} 
               roundsToSimulate={roundsToSimulate}
@@ -613,6 +700,7 @@ const App: React.FC = () => {
 
           {view === 'DRAFT' && (
             <DraftBoard 
+              teams={teams}
               state={state} 
               onDraftPlayer={handleDraftPlayer}
               onSelectProspect={(p) => setSelectedProspectId(p.id)}
@@ -622,6 +710,7 @@ const App: React.FC = () => {
 
           {view === 'SUMMARY' && (
             <Summary 
+              teams={teams}
               state={state} 
               onRestart={restartApp} 
               onSelectProspect={(p) => setSelectedProspectId(p.id)}
@@ -692,6 +781,7 @@ const App: React.FC = () => {
 
           {isTradeModalOpen && activeTradingTeamId && (
             <TradeModal 
+              teams={teams}
               userTeamId={activeTradingTeamId}
               currentPicks={state.picks}
               futurePicks={state.futurePicks}
