@@ -227,6 +227,15 @@ const App: React.FC = () => {
               nflBloodline: !!(p.nfl_bloodline ?? p.NFLBloodline ?? false),
               freaksList: !!(p.freaks_list ?? p.FreaksList ?? false),
               draftYear: p.draft_year || p.DraftYear || 2026,
+              combine: {
+                fortyYardDash: p['40_yard_dash'] || null,
+                tenYardSplit: p['10_yard_spli'] || p['10_yard_split'] || null,
+                threeConeDrill: p['3_cone_drill'] || null,
+                twentyYardShuttle: p['20_yard_shuttle'] || null,
+                verticalJump: p['vertical_jump'] || null,
+                broadJump: p['broad_jump'] || null,
+                benchPress: p['bench-press'] || p['bench_press'] || null
+              }
             };
           });
           setState(prev => ({ ...prev, prospects: mappedProspects }));

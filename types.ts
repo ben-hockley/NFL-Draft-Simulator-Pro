@@ -26,6 +26,16 @@ export interface PlayerStats {
   inside20?: number;
 }
 
+export interface CombineStats {
+  fortyYardDash?: number | null;
+  tenYardSplit?: number | null;
+  threeConeDrill?: number | null;
+  twentyYardShuttle?: number | null;
+  verticalJump?: number | null;
+  broadJump?: number | null;
+  benchPress?: number | null;
+}
+
 export interface Prospect {
   id: string;
   espnId: number;
@@ -49,6 +59,7 @@ export interface Prospect {
   nflBloodline?: boolean;
   freaksList?: boolean;
   draftYear: number;
+  combine?: CombineStats;
 }
 
 export interface Team {
