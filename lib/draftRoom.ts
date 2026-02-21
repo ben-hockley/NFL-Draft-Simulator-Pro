@@ -2,6 +2,14 @@ import { supabase } from '../supabase';
 import { DraftParticipant, OnlineRoomState, DraftState } from '../types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
+// Database row shape for draft_participants
+interface ParticipantRow {
+  id: string;
+  display_name: string;
+  selected_team_id: string | null;
+  color_slot: number;
+}
+
 // Participant color palette
 export const PARTICIPANT_COLORS: Record<number, string> = {
   1: '#3B82F6', // blue
@@ -14,7 +22,7 @@ export const PARTICIPANT_COLORS: Record<number, string> = {
  * Generate a random 6-character alphanumeric invite code
  */
 export function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous chars (0, O, 1, I)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous chars: 0/O, 1/I
   let code = '';
   for (let i = 0; i < 6; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -165,7 +173,7 @@ export async function joinRoom(
     .eq('room_id', room.id);
 
   const mappedParticipants: DraftParticipant[] = (allParticipants || []).map(
-    (p: { id: string; display_name: string; selected_team_id: string | null; color_slot: number }) => ({
+    (p: ParticipantRow) => ({
       id: p.id,
       displayName: p.display_name,
       selectedTeamId: p.selected_team_id,
@@ -204,7 +212,7 @@ export async function fetchRoomByInviteCode(
     .eq('room_id', room.id);
 
   const mappedParticipants: DraftParticipant[] = (participants || []).map(
-    (p: { id: string; display_name: string; selected_team_id: string | null; color_slot: number }) => ({
+    (p: ParticipantRow) => ({
       id: p.id,
       displayName: p.display_name,
       selectedTeamId: p.selected_team_id,
@@ -324,7 +332,7 @@ export function subscribeToRoom(
       const hostId = room?.host_participant_id || '';
 
       const mapped: DraftParticipant[] = (participants || []).map(
-        (p: { id: string; display_name: string; selected_team_id: string | null; color_slot: number }) => ({
+        (p: ParticipantRow) => ({
           id: p.id,
           displayName: p.display_name,
           selectedTeamId: p.selected_team_id,

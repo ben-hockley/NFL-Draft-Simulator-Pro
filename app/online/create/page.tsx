@@ -44,7 +44,7 @@ export default function CreateRoomPage() {
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full animate-fadeIn">
         <button
-          onClick={() => router.push('/#/draftsim')}
+          onClick={() => router.push('/#/modeselect')}
           className="mb-8 p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all group flex items-center gap-2"
         >
           <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

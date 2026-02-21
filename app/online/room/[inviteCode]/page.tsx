@@ -282,11 +282,12 @@ export default function RoomPage() {
     };
   }, [localParticipantId, inviteCode]);
 
-  // Mark disconnected on page unload
+  // Mark disconnected on page unload (best-effort, may not complete)
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (localParticipantId) {
-        markDisconnected(localParticipantId);
+        // Fire-and-forget: browser may terminate before completion
+        void markDisconnected(localParticipantId);
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -537,9 +538,9 @@ export default function RoomPage() {
     [selectedProspectId, prospects]
   );
 
-  const handleLeaveRoom = useCallback(() => {
+  const handleLeaveRoom = useCallback(async () => {
     if (localParticipantId) {
-      markDisconnected(localParticipantId);
+      await markDisconnected(localParticipantId);
     }
     if (channelRef.current) {
       unsubscribeFromRoom(channelRef.current);
