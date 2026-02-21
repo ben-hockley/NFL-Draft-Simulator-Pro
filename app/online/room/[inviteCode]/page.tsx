@@ -206,7 +206,17 @@ export default function RoomPage() {
           setRoomState(prev => (prev ? { ...prev, status } : prev));
 
           if (status === 'DRAFTING' && newDraftState) {
-            setDraftState(newDraftState);
+            setDraftState(prev => {
+              // Only apply DB state if it is at the same pick or further ahead than
+              // the current local state. This prevents stale / out-of-order Realtime
+              // postgres_changes events (e.g. the initial state saved during
+              // handleStartDraft arriving late) from rewinding the draft back to
+              // pick 1 mid-simulation.
+              if (!prev || newDraftState.currentPickIndex >= prev.currentPickIndex) {
+                return newDraftState;
+              }
+              return prev;
+            });
             setRoomView('DRAFT');
           } else if (status === 'COMPLETE') {
             setRoomView('SUMMARY');
