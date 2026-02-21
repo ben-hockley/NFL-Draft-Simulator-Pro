@@ -77,6 +77,7 @@ export interface DraftPick {
   team: Team;
   selectedPlayerId?: string;
   isTraded?: boolean;
+  madeByParticipantId?: string; // undefined = AI pick
 }
 
 export type AppView = 'LOBBY' | 'DRAFT' | 'SUMMARY' | 'BIGBOARD';
@@ -97,4 +98,21 @@ export interface DraftState {
   roundsToSimulate: number;
   draftSpeed: DraftSpeed;
   futurePicks: Record<string, number[]>; // TeamID to array of Round numbers (2027)
+}
+
+export type DraftMode = 'SOLO' | 'ONLINE_HOST' | 'ONLINE_JOIN';
+
+export interface DraftParticipant {
+  id: string;           // uuid, client-generated per session
+  displayName: string;
+  selectedTeamId: string | null;
+  colorSlot: 1 | 2 | 3 | 4;
+  isHost: boolean;
+}
+
+export interface OnlineRoomState {
+  roomId: string;
+  inviteCode: string;
+  participants: DraftParticipant[];
+  status: 'LOBBY' | 'DRAFTING' | 'COMPLETE';
 }

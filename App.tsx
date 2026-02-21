@@ -11,6 +11,7 @@ import { TradeModal } from './components/TradeModal.tsx';
 import { PlayerComparison } from './components/PlayerComparison.tsx';
 import { Button } from './components/Button.tsx';
 import { BigBoard } from './components/BigBoard.tsx';
+import { ModeSelectScreen } from './components/ModeSelectScreen.tsx';
 import { supabase } from './supabase.ts';
 
 /**
@@ -477,14 +478,26 @@ const App: React.FC = () => {
 
   // View Resolution based on currentRoute
   const isHomeView = currentRoute === '/home' || currentRoute === '/';
+  const isModeSelectView = currentRoute === '/modeselect';
   const isDraftView = currentRoute === '/draftsim';
   const isBigBoardView = currentRoute === '/bigboard';
 
   if (isHomeView) {
     return (
       <HomePage 
-        onStartDraft={() => handleNavigate('/draftsim')} 
+        onStartDraft={() => handleNavigate('/modeselect')} 
         onGoToBigBoard={() => handleNavigate('/bigboard')} 
+      />
+    );
+  }
+
+  if (isModeSelectView) {
+    return (
+      <ModeSelectScreen
+        onSoloDraft={() => handleNavigate('/draftsim')}
+        onCreateRoom={() => { window.location.href = '/online/create'; }}
+        onJoinRoom={() => { window.location.href = '/online/join'; }}
+        onBack={() => handleNavigate('/home')}
       />
     );
   }
