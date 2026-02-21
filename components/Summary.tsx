@@ -47,6 +47,7 @@ export const Summary: React.FC<SummaryProps> = ({ teams, state, onRestart, onSel
     const draftedIds = state.picks.map(p => p.selectedPlayerId).filter(Boolean);
     return state.prospects
       .filter(p => !draftedIds.includes(p.id))
+      .filter(p => p.draftYear === 2026)
       .sort((a, b) => a.rank - b.rank);
   }, [state.prospects, state.picks]);
 

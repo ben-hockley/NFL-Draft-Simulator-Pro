@@ -23,9 +23,9 @@ const HomePage: React.FC<{ onStartDraft: () => void; onGoToBigBoard: () => void 
       <div className="max-w-4xl animate-fadeIn">
         <div className="mb-8 flex justify-center">
           <div className="w-20 h-20 lg:w-32 lg:h-32 bg-emerald-500 rounded-3xl rotate-12 flex items-center justify-center shadow-[0_0_50px_rgba(16,185,129,0.3)]">
-            <svg className="w-12 h-12 lg:w-20 lg:h-20 text-white -rotate-12" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+            <span className="text-white text-4xl lg:text-6xl -rotate-12" aria-hidden>
+              🏈
+            </span>
           </div>
         </div>
         
@@ -34,7 +34,7 @@ const HomePage: React.FC<{ onStartDraft: () => void; onGoToBigBoard: () => void 
         </h1>
         
         <p className="text-slate-400 text-lg lg:text-2xl font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
-          The most advanced 2026 NFL Mock Draft simulator. Explore the 2026 prospect big board or dive into a mock draft.
+          Explore the big board of prospects or jump into a draft simulation.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
@@ -61,20 +61,20 @@ const HomePage: React.FC<{ onStartDraft: () => void; onGoToBigBoard: () => void 
 
         <div className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-4 opacity-50">
           <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-            <span className="block text-emerald-500 font-black text-xl font-oswald">32</span>
-            <span className="text-[10px] font-bold text-slate-500 uppercase">NFL Teams</span>
+            <span className="block text-emerald-500 font-black text-xl font-oswald">400+</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase">Draft Prospects</span>
           </div>
           <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-            <span className="block text-emerald-500 font-black text-xl font-oswald">2026</span>
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Draft Class</span>
+            <span className="block text-emerald-500 font-black text-xl font-oswald">90+</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase">Colleges</span>
+          </div>
+          <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+            <span className="block text-emerald-500 font-black text-xl font-oswald">Up to 4</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase">Players per lobby</span>
           </div>
           <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
             <span className="block text-emerald-500 font-black text-xl font-oswald">FREE</span>
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Trading Tool</span>
-          </div>
-          <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-            <span className="block text-emerald-500 font-black text-xl font-oswald">REAL</span>
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Scouting Intel</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase">Trades</span>
           </div>
         </div>
       </div>

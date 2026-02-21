@@ -119,7 +119,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                 <select 
                   value={posFilter}
                   onChange={(e) => setPosFilter(e.target.value as Position | 'ALL')}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase font-bold text-xs"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs"
                 >
                   <option value="ALL">All Positions</option>
                   {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
@@ -142,7 +142,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                  <select 
                     value={draftYearFilter}
                     onChange={(e) => setDraftYearFilter(Number(e.target.value))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs uppercase"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs"
                   >
                     <option value={2026}>2026 Draft</option>
                     <option value={2027}>2027 Draft</option>
@@ -180,7 +180,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                 onClick={() => setIsAttributesOpen(!isAttributesOpen)}
                 className="flex items-center gap-2 group outline-none"
               >
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] group-hover:text-slate-300 transition-colors">Attributes</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] group-hover:text-slate-300 transition-colors">Tags</span>
                 <div className={`transition-transform duration-300 ${isAttributesOpen ? 'rotate-180' : ''}`}>
                   <svg className="w-3 h-3 text-slate-500 group-hover:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
@@ -260,8 +260,8 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                         <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg uppercase">
                           RANK #{prospect.rank}
                         </span>
-                        <span className="bg-slate-700/80 backdrop-blur-sm text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded uppercase">
-                          POS RK #{getPositionRank(prospect)}
+                        <span className="bg-slate-700/80 backdrop-blur-sm text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded uppercase text-center">
+                          #{getPositionRank(prospect)} {prospect.position}
                         </span>
                       </div>
 

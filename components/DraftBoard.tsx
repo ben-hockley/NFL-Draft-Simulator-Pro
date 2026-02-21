@@ -152,7 +152,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                   filter === 'ALL' ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                 }`}
               >
-                ALL POSITIONS
+                All Positions
               </button>
               {POSITIONS.map(pos => (
                 <button
