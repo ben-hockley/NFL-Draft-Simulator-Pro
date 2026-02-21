@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
 import { DraftState, Prospect, Team } from '../types';

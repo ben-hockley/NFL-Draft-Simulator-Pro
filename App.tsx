@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppView, DraftState, Prospect, Position, PickAsset, DraftSpeed, Team } from './types.ts';
@@ -83,6 +84,7 @@ const HomePage: React.FC<{ onStartDraft: () => void; onGoToBigBoard: () => void 
 const App: React.FC = () => {
   // Helper to parse current path from hash or fallback to root
   const getRouteFromHash = () => {
+    if (typeof window === 'undefined') return '/home';
     const hash = window.location.hash.replace('#', '');
     return hash || '/home';
   };
