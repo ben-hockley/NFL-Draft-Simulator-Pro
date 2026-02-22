@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { DraftState, Prospect, Position, Team } from '../types.ts';
+import { DraftState, Prospect, Position, Team, DraftParticipant } from '../types.ts';
+import { PARTICIPANT_COLORS } from '../lib/draftRoom';
 import { Button } from './Button.tsx';
 
 interface DraftBoardProps {
@@ -10,6 +11,10 @@ interface DraftBoardProps {
   onDraftPlayer: (prospect: Prospect) => void;
   onSelectProspect: (prospect: Prospect) => void;
   selectedProspectId: string | null;
+  /** Online-mode participants; when provided, drive user-pick tags and draft-button visibility */
+  participants?: DraftParticipant[];
+  /** When set, overrides isUserTurn for showing the Draft button (online mode: only local user's turn) */
+  canDraft?: boolean;
 }
 
 const POSITIONS: Position[] = ['QB', 'RB', 'WR', 'TE', 'OT', 'IOL', 'EDGE', 'DL', 'LB', 'CB', 'S', 'K', 'P', 'LS'];
@@ -21,7 +26,9 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   state, 
   onDraftPlayer, 
   onSelectProspect,
-  selectedProspectId
+  selectedProspectId,
+  participants,
+  canDraft,
 }) => {
   const [filter, setFilter] = useState<Position | 'ALL'>('ALL');
   const [collegeFilter, setCollegeFilter] = useState<string>('ALL');
@@ -37,6 +44,8 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   const picksInScope = useMemo(() => state.picks.filter(p => p.round <= state.roundsToSimulate), [state.picks, state.roundsToSimulate]);
   const currentPick = picksInScope[state.currentPickIndex];
   const isUserTurn = state.userControlledTeams.includes(currentPick?.team.id);
+  // In online mode canDraft is explicitly set; fall back to isUserTurn for solo mode
+  const showDraftButton = canDraft ?? isUserTurn;
   
   const draftedPlayerIds = useMemo(() => 
     state.picks.map(p => p.selectedPlayerId).filter(Boolean), 
@@ -224,7 +233,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {isUserTurn && (
+                      {showDraftButton && (
                         <Button 
                           variant="primary" 
                           className="text-[10px] py-1 px-3 h-8 uppercase font-bold"
@@ -289,7 +298,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
 
                   {/* Action Button */}
                   <div className="shrink-0">
-                    {isUserTurn ? (
+                    {showDraftButton ? (
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -352,6 +361,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                 const scopeIndex = picksInScope.findIndex(p => p.pickNumber === pick.pickNumber);
                 const isCurrent = scopeIndex === state.currentPickIndex;
                 const isCompleted = !!pick.selectedPlayerId;
+                const pickParticipant = participants?.find(p => p.selectedTeamId === pick.team.id);
 
                 const showRoundSeparator = index === 0 || filteredTrackerPicks[index - 1].round !== pick.round;
 
@@ -391,11 +401,23 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <img src={pick.team.logoUrl} className="w-3 h-3" alt="" />
+                        <div className="flex items-center flex-wrap gap-1 mb-0.5">
+                          <img src={pick.team.logoUrl} className="w-3 h-3 shrink-0" alt="" />
                           <span className={`text-[9px] font-bold uppercase truncate ${isCurrent ? 'text-emerald-400' : 'text-slate-500'}`}>
                             {pick.team.name}
                           </span>
+                          {pickParticipant && (
+                            <span
+                              className="text-[7px] font-black px-1 py-px rounded border shrink-0 whitespace-nowrap"
+                              style={{
+                                color: PARTICIPANT_COLORS[pickParticipant.colorSlot],
+                                borderColor: `${PARTICIPANT_COLORS[pickParticipant.colorSlot]}50`,
+                                backgroundColor: `${PARTICIPANT_COLORS[pickParticipant.colorSlot]}15`,
+                              }}
+                            >
+                              👤 {pickParticipant.displayName}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex justify-between items-center gap-2">

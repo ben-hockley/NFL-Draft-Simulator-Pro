@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
-import { DraftState, Prospect, Team } from '../types';
+import { DraftState, Prospect, Team, DraftParticipant } from '../types';
+import { PARTICIPANT_COLORS } from '../lib/draftRoom';
 import { Button } from './Button';
 
 interface SummaryProps {
@@ -9,6 +10,8 @@ interface SummaryProps {
   state: DraftState;
   onRestart: () => void;
   onSelectProspect: (prospect: Prospect) => void;
+  /** Online-mode participants; enables per-user pick highlighting */
+  participants?: DraftParticipant[];
 }
 
 type SummaryTab = 'RESULTS' | 'BEST_AVAILABLE' | 'MY_PICKS';
@@ -23,7 +26,7 @@ const getGradeColor = (grade: string) => {
   return 'text-red-400 bg-red-500/20 border-red-500/40';
 };
 
-export const Summary: React.FC<SummaryProps> = ({ teams, state, onRestart, onSelectProspect }) => {
+export const Summary: React.FC<SummaryProps> = ({ teams, state, onRestart, onSelectProspect, participants }) => {
   const [activeTab, setActiveTab] = useState<SummaryTab>('RESULTS');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   
@@ -134,7 +137,7 @@ export const Summary: React.FC<SummaryProps> = ({ teams, state, onRestart, onSel
                 <svg className={`w-3 h-3 lg:w-4 lg:h-4 ${isGeneratingImage ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                <span className="hidden sm:inline">Download My Picks</span>
+                <span className="hidden sm:inline">Download User Picks</span>
               </Button>
             )}
             <Button 
@@ -170,7 +173,7 @@ export const Summary: React.FC<SummaryProps> = ({ teams, state, onRestart, onSel
                 : 'text-slate-500 hover:text-slate-300'
             }`}
           >
-            My Picks ({state.userControlledTeams.length})
+            User Picks ({state.userControlledTeams.length})
           </button>
           <button
             onClick={() => setActiveTab('BEST_AVAILABLE')}
@@ -203,18 +206,41 @@ export const Summary: React.FC<SummaryProps> = ({ teams, state, onRestart, onSel
                       {roundPicks.map((pick) => {
                         const player = state.prospects.find(p => p.id === pick.selectedPlayerId);
                         const isUserPick = state.userControlledTeams.includes(pick.team.id);
+                        // Online mode: find participant who actually made this pick
+                        const pickParticipant = participants?.find(p => p.id === pick.madeByParticipantId);
+                        const pickColor = pickParticipant ? PARTICIPANT_COLORS[pickParticipant.colorSlot] : null;
                         return (
                           <button 
                             key={pick.pickNumber} 
                             onClick={() => player && onSelectProspect(player)}
                             className={`flex flex-col p-2 rounded-lg border transition-all text-left group min-h-[70px] relative ${
-                              isUserPick 
-                                ? 'bg-emerald-500/10 border-emerald-500/40 hover:bg-emerald-500/20' 
-                                : 'bg-slate-800/40 border-slate-800/60 hover:border-slate-600'
+                              pickColor
+                                ? 'hover:brightness-110'
+                                : isUserPick 
+                                  ? 'bg-emerald-500/10 border-emerald-500/40 hover:bg-emerald-500/20' 
+                                  : 'bg-slate-800/40 border-slate-800/60 hover:border-slate-600'
                             }`}
+                            style={pickColor ? {
+                              backgroundColor: `${pickColor}12`,
+                              borderColor: `${pickColor}50`,
+                            } : undefined}
                           >
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-[10px] font-black font-oswald text-slate-500">#{pick.pickNumber}</span>
+                            <div className="flex justify-between items-center mb-1 gap-1">
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-[10px] font-black font-oswald text-slate-500">#{pick.pickNumber}</span>
+                                {pickParticipant && (
+                                  <span
+                                    className="text-[7px] font-black px-1 py-px rounded border shrink-0 whitespace-nowrap"
+                                    style={{
+                                      color: pickColor!,
+                                      borderColor: `${pickColor}50`,
+                                      backgroundColor: `${pickColor}18`,
+                                    }}
+                                  >
+                                    {pickParticipant.displayName}
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-1">
                                  {pick.isTraded && (
                                     <svg className="w-2.5 h-2.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

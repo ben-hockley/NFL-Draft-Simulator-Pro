@@ -12,7 +12,7 @@ interface PlayerDetailProps {
   onDraft: (prospect: Prospect) => void;
   onClose: () => void;
   onCompare?: () => void;
-  completedPick?: { team: Team; pickNumber: number };
+  completedPick?: { team: Team; pickNumber: number; pickedByName?: string };
   showDraftYear?: boolean;
 }
 
@@ -491,8 +491,10 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
                 <img src={completedPick.team.logoUrl} className="max-w-full max-h-full" alt="" />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="block text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">DRAFTED AT PICK #{completedPick.pickNumber}</span>
-                <span className="text-base sm:text-xl font-black font-oswald text-white uppercase tracking-tight truncate block">SELECTED BY {completedPick.team.name}</span>
+                <span className="block text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">
+                  Picked by {completedPick.pickedByName || 'CPU'} at pick #{completedPick.pickNumber}
+                </span>
+                <span className="text-base sm:text-xl font-black font-oswald text-white uppercase tracking-tight truncate block">FOR {completedPick.team.name}</span>
               </div>
             </div>
           ) : isUserTurn && currentTeam ? (

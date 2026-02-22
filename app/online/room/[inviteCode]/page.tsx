@@ -548,6 +548,26 @@ export default function RoomPage() {
     [selectedProspectId, prospects]
   );
 
+  // Local participant object and their color
+  const localParticipant = useMemo(
+    () => roomState?.participants.find(p => p.id === localParticipantId) || null,
+    [roomState, localParticipantId]
+  );
+  const localParticipantColor = localParticipant ? PARTICIPANT_COLORS[localParticipant.colorSlot] : '#3B82F6';
+
+  // Completed-pick metadata for PlayerDetail opened in the summary view
+  const summaryCompletedPick = useMemo(() => {
+    if (!selectedProspect || !draftState) return undefined;
+    const pick = draftState.picks.find(p => p.selectedPlayerId === selectedProspect.id);
+    if (!pick) return undefined;
+    const participant = roomState?.participants.find(p => p.id === pick.madeByParticipantId);
+    return {
+      team: pick.team,
+      pickNumber: pick.pickNumber,
+      pickedByName: participant?.displayName,
+    };
+  }, [selectedProspect, draftState, roomState]);
+
   const handleLeaveRoom = useCallback(async () => {
     if (localParticipantId) {
       await markDisconnected(localParticipantId);
@@ -661,6 +681,20 @@ export default function RoomPage() {
                 </div>
               )}
             </div>
+            {/* Local user identity badge */}
+            {localParticipant && (
+              <div
+                className="flex items-center gap-1.5 px-2 lg:px-3 py-1 lg:py-1.5 rounded-xl border font-bold text-[10px] lg:text-xs shrink-0"
+                style={{
+                  backgroundColor: `${localParticipantColor}20`,
+                  borderColor: `${localParticipantColor}50`,
+                  color: localParticipantColor,
+                }}
+              >
+                <span className="text-sm">👤</span>
+                <span className="hidden sm:block max-w-[80px] lg:max-w-[120px] truncate">{localParticipant.displayName}</span>
+              </div>
+            )}
             <Button
               variant="ghost"
               onClick={handleLeaveRoom}
@@ -681,6 +715,8 @@ export default function RoomPage() {
             onDraftPlayer={isLocalUserTurn ? handleDraftPlayer : () => {}}
             onSelectProspect={p => setSelectedProspectId(p.id)}
             selectedProspectId={selectedProspectId}
+            participants={roomState.participants}
+            canDraft={isLocalUserTurn}
           />
         </main>
 
@@ -707,6 +743,7 @@ export default function RoomPage() {
           state={draftState}
           onRestart={handleLeaveRoom}
           onSelectProspect={p => setSelectedProspectId(p.id)}
+          participants={roomState?.participants}
         />
 
         {selectedProspect && (
@@ -715,6 +752,7 @@ export default function RoomPage() {
             allProspects={prospects}
             onDraft={() => {}}
             onClose={() => setSelectedProspectId(null)}
+            completedPick={summaryCompletedPick}
           />
         )}
       </div>

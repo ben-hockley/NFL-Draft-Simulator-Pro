@@ -23,10 +23,7 @@ export const OnTheClockBanner: React.FC<OnTheClockBannerProps> = ({
       style={{ backgroundColor: `${color}20`, borderBottom: `2px solid ${color}` }}
     >
       <span style={{ color }}>
-        {participant.displayName}
-      </span>
-      <span className="text-white">
-        {isLocalUser ? 'is on the clock! ⏰' : 'is on the clock'}
+        {isLocalUser ? 'You are on the clock! ⏰' : `${participant.displayName} is on the clock ⏰`}
       </span>
     </div>
   );
