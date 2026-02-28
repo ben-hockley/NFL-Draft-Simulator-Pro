@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Prospect, Position } from '../types.ts';
+import { Prospect, Position, CombineStats } from '../types.ts';
 import { Button } from './Button.tsx';
+import { COMBINE_STAT_META, formatCombineValue, getDefaultSortDir, sortByCombineStat } from '../lib/combineUtils';
 
 interface BigBoardProps {
   prospects: Prospect[];
@@ -25,6 +26,8 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
   const [onlyFreaks, setOnlyFreaks] = useState(false);
   const [isAttributesOpen, setIsAttributesOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('GRID');
+  const [contentMode, setContentMode] = useState<'info' | 'combine'>('info');
+  const [combineSort, setCombineSort] = useState<{ key: keyof CombineStats; dir: 'asc' | 'desc' } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const uniqueColleges = useMemo(() => {
@@ -41,7 +44,7 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
   }, [only5Star, onlyAllAmerican, onlyBloodline, onlyFreaks]);
 
   const filteredProspects = useMemo(() => {
-    return prospects.filter(p => {
+    let list = prospects.filter(p => {
       const matchesYear = p.draftYear === draftYearFilter;
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesPos = posFilter === 'ALL' || p.position === posFilter;
@@ -52,7 +55,11 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
       const matchesFreaks = !onlyFreaks || p.freaksList;
       return matchesYear && matchesSearch && matchesPos && matchesCollege && matches5Star && matchesAllAmerican && matchesBloodline && matchesFreaks;
     });
-  }, [prospects, searchTerm, posFilter, collegeFilter, only5Star, onlyAllAmerican, onlyBloodline, onlyFreaks, draftYearFilter]);
+    if (combineSort) {
+      list = sortByCombineStat(list, combineSort.key, combineSort.dir);
+    }
+    return list;
+  }, [prospects, searchTerm, posFilter, collegeFilter, only5Star, onlyAllAmerican, onlyBloodline, onlyFreaks, draftYearFilter, combineSort]);
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -71,6 +78,14 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
       .filter(p => p.position === prospect.position && p.draftYear === draftYearFilter)
       .sort((a, b) => a.rank - b.rank);
     return posProspects.findIndex(p => p.id === prospect.id) + 1;
+  };
+
+  const handleCombineHeaderClick = (key: keyof CombineStats) => {
+    if (combineSort?.key === key) {
+      setCombineSort({ key, dir: combineSort.dir === 'asc' ? 'desc' : 'asc' });
+    } else {
+      setCombineSort({ key, dir: getDefaultSortDir(key) });
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -167,6 +182,19 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => {
+                    setContentMode(contentMode === 'info' ? 'combine' : 'info');
+                    if (contentMode === 'combine') setCombineSort(null);
+                  }}
+                  aria-label="Toggle Combine View"
+                  title={contentMode === 'info' ? 'Show Combine Stats' : 'Show Player Info'}
+                  className={`p-2 rounded-lg transition-all ${contentMode === 'combine' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </button>
               </div>
@@ -303,7 +331,18 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                         </span>
                       </div>
                       <p className="text-slate-400 text-xs leading-relaxed line-clamp-3 mb-4 flex-1 italic">
-                        {prospect.summary || "Summary report currently being analyzed by our team."}
+                        {contentMode === 'combine' ? (
+                          <span className="not-italic grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+                            {COMBINE_STAT_META.map(stat => (
+                              <span key={stat.key} className="flex justify-between">
+                                <span className="text-slate-500 font-bold uppercase">{stat.shortLabel}:</span>
+                                <span className="text-slate-300 font-oswald">{formatCombineValue(stat.key, prospect.combine?.[stat.key] ?? null)}</span>
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          prospect.summary || "Summary report currently being analyzed by our team."
+                        )}
                       </p>
                       <div className="pt-4 border-t border-slate-800 flex justify-between items-center shrink-0">
                         <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">View Full Report</span>
@@ -329,8 +368,31 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-20"></th>
                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prospect</th>
                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24">Pos</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-48">College</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden lg:table-cell">Summary</th>
+                        {contentMode === 'combine' ? (
+                          <>
+                            {COMBINE_STAT_META.map(stat => (
+                              <th
+                                key={stat.key}
+                                onClick={() => handleCombineHeaderClick(stat.key)}
+                                className="px-3 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-20 cursor-pointer hover:text-emerald-400 transition-colors select-none"
+                              >
+                                <div className="flex items-center gap-1">
+                                  {stat.shortLabel}
+                                  {combineSort?.key === stat.key && (
+                                    <svg className={`w-3 h-3 text-emerald-400 ${combineSort.dir === 'desc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                                    </svg>
+                                  )}
+                                </div>
+                              </th>
+                            ))}
+                          </>
+                        ) : (
+                          <>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-48">College</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden lg:table-cell">Summary</th>
+                          </>
+                        )}
                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16"></th>
                       </tr>
                     </thead>
@@ -367,17 +429,31 @@ export const BigBoard: React.FC<BigBoardProps> = ({ prospects, onSelectProspect 
                               {prospect.position}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <img src={prospect.collegeLogoUrl} className="w-5 h-5 object-contain" alt="" />
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{prospect.college}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 hidden lg:table-cell">
-                            <p className="text-slate-500 text-xs italic line-clamp-1">
-                              {prospect.summary}
-                            </p>
-                          </td>
+                          {contentMode === 'combine' ? (
+                            <>
+                              {COMBINE_STAT_META.map(stat => (
+                                <td key={stat.key} className="px-3 py-4">
+                                  <span className="text-xs font-bold text-slate-300 font-oswald">
+                                    {formatCombineValue(stat.key, prospect.combine?.[stat.key] ?? null)}
+                                  </span>
+                                </td>
+                              ))}
+                            </>
+                          ) : (
+                            <>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  <img src={prospect.collegeLogoUrl} className="w-5 h-5 object-contain" alt="" />
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{prospect.college}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 hidden lg:table-cell">
+                                <p className="text-slate-500 text-xs italic line-clamp-1">
+                                  {prospect.summary}
+                                </p>
+                              </td>
+                            </>
+                          )}
                           <td className="px-6 py-4 text-right">
                             <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
                               <svg className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">

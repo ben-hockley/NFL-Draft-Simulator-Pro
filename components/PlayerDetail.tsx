@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useMemo, useEffect, useState } from 'react';
-import { Prospect, Team, PlayerStats } from '../types';
+import { Prospect, Team, PlayerStats, CombineStats } from '../types';
 import { Button } from './Button';
+import { COMBINE_STAT_META, computeCombineRank, formatBroadJump as fmtBroadJump, formatCombineValue } from '../lib/combineUtils';
 
 interface PlayerDetailProps {
   prospect: Prospect | null;
@@ -149,21 +150,7 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
     return posProspects.findIndex(p => p.id === prospect.id) + 1;
   }, [prospect, allProspects]);
 
-  const formatBroadJump = (val: number | null | undefined): string => {
-    if (!val) return 'N/A';
-    const s = String(val);
-    // Format 6010 = 6'1", 10020 = 10'2"
-    // Assuming FIIE format where last digit is eights? Or just checking pattern from prompt
-    // "6010 = 6ft1". Let's assume FIIE (Feet, Inches, Eighths) or FII (Feet, Inches) + trailing zero
-    // Safe bet: Slice from end
-    // Last digit seems to be eighths or ignored for now based on '6ft1'
-    if (s.length >= 4) {
-      const inches = s.slice(-3, -1);
-      const feet = s.slice(0, -3);
-      return `${feet}'${parseInt(inches)}"`;
-    }
-    return 'N/A';
-  };
+  const formatBroadJump = fmtBroadJump;
 
   if (!prospect) return null;
 
@@ -410,36 +397,50 @@ export const PlayerDetail: React.FC<PlayerDetailProps> = ({
                   label="40 Yard Dash" 
                   value={prospect.combine?.fortyYardDash ? `${prospect.combine.fortyYardDash}s` : 'N/A'}
                   icon={<svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                  ranks={computeCombineRank(prospect, allProspects, 'fortyYardDash')}
+                  position={prospect.position}
                 />
                 <CombineCard 
                   label="10 Yard Split" 
                   value={prospect.combine?.tenYardSplit ? `${prospect.combine.tenYardSplit}s` : 'N/A'}
                   icon={<svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+                  ranks={computeCombineRank(prospect, allProspects, 'tenYardSplit')}
+                  position={prospect.position}
                 />
                 <CombineCard 
                   label="Vertical Jump" 
                   value={prospect.combine?.verticalJump ? `${prospect.combine.verticalJump}"` : 'N/A'}
                   icon={<svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>}
+                  ranks={computeCombineRank(prospect, allProspects, 'verticalJump')}
+                  position={prospect.position}
                 />
                 <CombineCard 
                   label="Broad Jump" 
                   value={formatBroadJump(prospect.combine?.broadJump)}
                   icon={<svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>}
+                  ranks={computeCombineRank(prospect, allProspects, 'broadJump')}
+                  position={prospect.position}
                 />
                 <CombineCard 
                   label="3 Cone Drill" 
                   value={prospect.combine?.threeConeDrill ? `${prospect.combine.threeConeDrill}s` : 'N/A'}
                   icon={<svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
+                  ranks={computeCombineRank(prospect, allProspects, 'threeConeDrill')}
+                  position={prospect.position}
                 />
                 <CombineCard 
                   label="20 Yard Shuttle" 
                   value={prospect.combine?.twentyYardShuttle ? `${prospect.combine.twentyYardShuttle}s` : 'N/A'}
                   icon={<svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>}
+                  ranks={computeCombineRank(prospect, allProspects, 'twentyYardShuttle')}
+                  position={prospect.position}
                 />
                 <CombineCard 
                   label="Bench Press" 
                   value={prospect.combine?.benchPress ? `${prospect.combine.benchPress} Reps` : 'N/A'}
                   icon={<svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>}
+                  ranks={computeCombineRank(prospect, allProspects, 'benchPress')}
+                  position={prospect.position}
                 />
               </div>
             </div>
@@ -528,8 +529,25 @@ const StatCard: React.FC<{ label: string; value: any }> = ({ label, value }) => 
   </div>
 );
 
-const CombineCard: React.FC<{ label: string; value: any; icon: React.ReactNode }> = ({ label, value, icon }) => (
-  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex flex-col items-center text-center gap-2 group hover:border-emerald-500/40 hover:bg-slate-800 transition-all">
+const getRankTagClasses = (rank: number): string => {
+  if (rank === 1) return 'bg-amber-500/20 border-amber-500/50 text-amber-400';
+  if (rank === 2) return 'bg-slate-400/15 border-slate-400/40 text-slate-300';
+  if (rank === 3) return 'bg-orange-700/20 border-orange-600/40 text-orange-400';
+  return 'bg-slate-800 border-slate-700 text-slate-500';
+};
+
+const CombineCard: React.FC<{ label: string; value: any; icon: React.ReactNode; ranks?: { overallRank: number; overallTotal: number; posRank: number; posTotal: number } | null; position?: string }> = ({ label, value, icon, ranks, position }) => (
+  <div className="relative bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex flex-col items-center text-center gap-2 group hover:border-emerald-500/40 hover:bg-slate-800 transition-all">
+    {ranks && (
+      <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+        <span className={`px-1.5 py-0.5 border rounded text-[7px] font-black uppercase tracking-widest leading-none ${getRankTagClasses(ranks.overallRank)}`}>
+          RK {ranks.overallRank}/{ranks.overallTotal}
+        </span>
+        <span className={`px-1.5 py-0.5 border rounded text-[7px] font-black uppercase tracking-widest leading-none ${getRankTagClasses(ranks.posRank)}`}>
+          RK {ranks.posRank}/{ranks.posTotal} {position}
+        </span>
+      </div>
+    )}
     <div className="p-2 rounded-full bg-slate-800 border border-slate-700 group-hover:scale-110 transition-transform">
       {icon}
     </div>

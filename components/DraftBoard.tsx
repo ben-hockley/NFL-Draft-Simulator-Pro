@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { DraftState, Prospect, Position, Team, DraftParticipant } from '../types.ts';
+import { DraftState, Prospect, Position, Team, DraftParticipant, CombineStats } from '../types.ts';
 import { PARTICIPANT_COLORS } from '../lib/draftRoom';
 import { Button } from './Button.tsx';
+import { COMBINE_STAT_META, formatCombineValue, getDefaultSortDir, sortByCombineStat } from '../lib/combineUtils';
 
 interface DraftBoardProps {
   teams: Team[];
@@ -34,6 +35,8 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   const [collegeFilter, setCollegeFilter] = useState<string>('ALL');
   const [teamTrackerFilter, setTeamTrackerFilter] = useState<string>('ALL');
   const [activeTab, setActiveTab] = useState<BoardTab>('PROSPECTS');
+  const [contentMode, setContentMode] = useState<'info' | 'combine'>('info');
+  const [combineSort, setCombineSort] = useState<{ key: keyof CombineStats; dir: 'asc' | 'desc' } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const sortedTeams = useMemo(() => 
@@ -71,8 +74,19 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
     if (collegeFilter !== 'ALL') {
       list = list.filter(p => p.college === collegeFilter);
     }
+    if (combineSort) {
+      list = sortByCombineStat(list, combineSort.key, combineSort.dir);
+    }
     return list;
-  }, [availableProspects, filter, collegeFilter]);
+  }, [availableProspects, filter, collegeFilter, combineSort]);
+
+  const handleCombineHeaderClick = (key: keyof CombineStats) => {
+    if (combineSort?.key === key) {
+      setCombineSort({ key, dir: combineSort.dir === 'asc' ? 'desc' : 'asc' });
+    } else {
+      setCombineSort({ key, dir: getDefaultSortDir(key) });
+    }
+  };
 
   const filteredTrackerPicks = useMemo(() => {
     if (teamTrackerFilter === 'ALL') return picksInScope;
@@ -141,6 +155,19 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                 <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
                   {availableProspects.length} REMAINING
                 </span>
+                <button
+                  onClick={() => {
+                    setContentMode(contentMode === 'info' ? 'combine' : 'info');
+                    if (contentMode === 'combine') setCombineSort(null);
+                  }}
+                  aria-label="Toggle Combine View"
+                  title={contentMode === 'info' ? 'Show Combine Stats' : 'Show Player Info'}
+                  className={`p-1.5 rounded-lg transition-all ${contentMode === 'combine' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 bg-slate-800 border border-slate-700'}`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
                 <select 
                   value={collegeFilter}
                   onChange={(e) => setCollegeFilter(e.target.value)}
@@ -185,8 +212,32 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                   <th className="px-4 py-2.5 w-14 lg:w-16">RK</th>
                   <th className="px-4 py-2.5 w-20"></th>
                   <th className="px-4 py-2.5 w-40 lg:w-48">PLAYER</th>
-                  <th className="px-4 py-2.5 w-28 lg:w-32">POS (RANK)</th>
-                  <th className="px-4 py-2.5 w-28 lg:w-32">SCHOOL</th>
+                  {contentMode === 'combine' ? (
+                    <>
+                      <th className="px-4 py-2.5 w-20">POS</th>
+                      {COMBINE_STAT_META.map(stat => (
+                        <th
+                          key={stat.key}
+                          onClick={() => handleCombineHeaderClick(stat.key)}
+                          className="px-2 py-2.5 w-16 lg:w-18 cursor-pointer hover:text-emerald-400 transition-colors select-none"
+                        >
+                          <div className="flex items-center gap-0.5">
+                            {stat.shortLabel}
+                            {combineSort?.key === stat.key && (
+                              <svg className={`w-3 h-3 text-emerald-400 ${combineSort.dir === 'desc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-4 py-2.5 w-28 lg:w-32">POS (RANK)</th>
+                      <th className="px-4 py-2.5 w-28 lg:w-32">SCHOOL</th>
+                    </>
+                  )}
                   <th className="px-4 py-2.5 text-right w-24">ACTION</th>
                 </tr>
               </thead>
@@ -216,22 +267,41 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col">
-                        <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-emerald-400 inline-block w-fit uppercase">
-                          {prospect.position}
-                        </span>
-                        <span className="text-[9px] font-black text-slate-500 uppercase mt-1">
-                          #{getPositionRank(prospect)} {prospect.position}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <img src={prospect.collegeLogoUrl} className="w-4 h-4 object-contain opacity-80" alt="" />
-                        <span className="text-xs font-medium text-slate-400 truncate">{prospect.college}</span>
-                      </div>
-                    </td>
+                    {contentMode === 'combine' ? (
+                      <>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-emerald-400 inline-block w-fit uppercase">
+                            {prospect.position}
+                          </span>
+                        </td>
+                        {COMBINE_STAT_META.map(stat => (
+                          <td key={stat.key} className="px-2 py-3">
+                            <span className="text-[11px] font-bold text-slate-300 font-oswald">
+                              {formatCombineValue(stat.key, prospect.combine?.[stat.key] ?? null)}
+                            </span>
+                          </td>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col">
+                            <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-emerald-400 inline-block w-fit uppercase">
+                              {prospect.position}
+                            </span>
+                            <span className="text-[9px] font-black text-slate-500 uppercase mt-1">
+                              #{getPositionRank(prospect)} {prospect.position}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <img src={prospect.collegeLogoUrl} className="w-4 h-4 object-contain opacity-80" alt="" />
+                            <span className="text-xs font-medium text-slate-400 truncate">{prospect.college}</span>
+                          </div>
+                        </td>
+                      </>
+                    )}
                     <td className="px-4 py-3 text-right">
                       {showDraftButton && (
                         <Button 
