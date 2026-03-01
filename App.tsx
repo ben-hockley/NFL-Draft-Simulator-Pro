@@ -12,11 +12,118 @@ import { PlayerComparison } from './components/PlayerComparison.tsx';
 import { Button } from './components/Button.tsx';
 import { BigBoard } from './components/BigBoard.tsx';
 import { ModeSelectScreen } from './components/ModeSelectScreen.tsx';
+import { BigBoardMaker } from './components/BigBoardMaker.tsx';
+import { CommunityBoards } from './components/CommunityBoards.tsx';
 import { supabase } from './supabase.ts';
 
 /**
  * Simple Homepage component
  */
+/**
+ * Big Board sub-menu with three options
+ */
+const BigBoardMenu: React.FC<{
+  onConsensus: () => void;
+  onCreateOwn: () => void;
+  onCommunity: () => void;
+  onBack: () => void;
+}> = ({ onConsensus, onCreateOwn, onCommunity, onBack }) => {
+  return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+      <div className="max-w-3xl w-full animate-fadeIn">
+        <button
+          onClick={onBack}
+          className="mb-8 p-2 lg:p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all group flex items-center gap-2"
+          title="Back to Home"
+        >
+          <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="text-xs font-black uppercase tracking-widest">Home</span>
+        </button>
+
+        <h1 className="text-3xl lg:text-5xl font-black font-oswald text-white uppercase tracking-tighter mb-4">
+          Prospect <span className="text-emerald-500">Big Board</span>
+        </h1>
+        <p className="text-slate-400 text-sm lg:text-lg mb-10">
+          View the consensus rankings, create your own board, or browse what others have built.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+          {/* View Consensus */}
+          <button
+            onClick={onConsensus}
+            className="group relative flex flex-col items-center gap-4 p-6 lg:p-8 bg-slate-900/60 border-2 border-slate-800 rounded-2xl hover:border-emerald-500 hover:bg-emerald-500/5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="w-16 h-16 lg:w-20 lg:h-20 bg-emerald-500/10 rounded-2xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+              <span className="text-3xl lg:text-4xl">\ud83d\udccb</span>
+            </div>
+            <div>
+              <h3 className="text-lg lg:text-xl font-black font-oswald text-white uppercase tracking-tight mb-1">
+                View Consensus
+              </h3>
+              <p className="text-xs lg:text-sm text-slate-500 leading-relaxed">
+                Browse the full prospect rankings with stats, combine data, and scouting reports.
+              </p>
+            </div>
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+          </button>
+
+          {/* Create My Own */}
+          <button
+            onClick={onCreateOwn}
+            className="group relative flex flex-col items-center gap-4 p-6 lg:p-8 bg-slate-900/60 border-2 border-slate-800 rounded-2xl hover:border-blue-500 hover:bg-blue-500/5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="w-16 h-16 lg:w-20 lg:h-20 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+              <span className="text-3xl lg:text-4xl">➕</span>
+            </div>
+            <div>
+              <h3 className="text-lg lg:text-xl font-black font-oswald text-white uppercase tracking-tight mb-1">
+                Create My Own
+              </h3>
+              <p className="text-xs lg:text-sm text-slate-500 leading-relaxed">
+                Build and save your own custom big board by ranking prospects.
+              </p>
+            </div>
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+          </button>
+
+          {/* View Community Boards */}
+          <button
+            onClick={onCommunity}
+            className="group relative flex flex-col items-center gap-4 p-6 lg:p-8 bg-slate-900/60 border-2 border-slate-800 rounded-2xl hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="w-16 h-16 lg:w-20 lg:h-20 bg-orange-500/10 rounded-2xl flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+              <span className="text-3xl lg:text-4xl">\ud83c\udf0d</span>
+            </div>
+            <div>
+              <h3 className="text-lg lg:text-xl font-black font-oswald text-white uppercase tracking-tight mb-1">
+                Community Boards
+              </h3>
+              <p className="text-xs lg:text-sm text-slate-500 leading-relaxed">
+                See how others ranked the prospects. Browse and compare boards.
+              </p>
+            </div>
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const HomePage: React.FC<{ onStartDraft: () => void; onGoToBigBoard: () => void }> = ({ onStartDraft, onGoToBigBoard }) => {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
@@ -179,7 +286,7 @@ const App: React.FC = () => {
 
   // Fetch prospects directly from Supabase only when navigating to /draftsim or /bigboard
   useEffect(() => {
-    const needsProspects = currentRoute === '/draftsim' || currentRoute === '/bigboard';
+    const needsProspects = currentRoute === '/draftsim' || currentRoute === '/bigboard' || currentRoute === '/bigboard-maker' || currentRoute === '/community-boards';
     if (!needsProspects || state.prospects.length > 0) return;
 
     const fetchProspects = async () => {
@@ -481,12 +588,26 @@ const App: React.FC = () => {
   const isModeSelectView = currentRoute === '/modeselect';
   const isDraftView = currentRoute === '/draftsim';
   const isBigBoardView = currentRoute === '/bigboard';
+  const isBigBoardMenuView = currentRoute === '/bigboard-menu';
+  const isBigBoardMakerView = currentRoute === '/bigboard-maker';
+  const isCommunityBoardsView = currentRoute === '/community-boards';
 
   if (isHomeView) {
     return (
       <HomePage 
         onStartDraft={() => handleNavigate('/modeselect')} 
-        onGoToBigBoard={() => handleNavigate('/bigboard')} 
+        onGoToBigBoard={() => handleNavigate('/bigboard-menu')} 
+      />
+    );
+  }
+
+  if (isBigBoardMenuView) {
+    return (
+      <BigBoardMenu
+        onConsensus={() => handleNavigate('/bigboard')}
+        onCreateOwn={() => handleNavigate('/bigboard-maker')}
+        onCommunity={() => handleNavigate('/community-boards')}
+        onBack={() => handleNavigate('/home')}
       />
     );
   }
@@ -531,6 +652,40 @@ const App: React.FC = () => {
     );
   }
 
+  if (isBigBoardMakerView) {
+    if (isLoadingProspects && state.prospects.length === 0) {
+      return (
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white">
+          <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-6"></div>
+          <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-emerald-400">Loading Prospects...</h2>
+        </div>
+      );
+    }
+    return (
+      <BigBoardMaker
+        prospects={state.prospects}
+        onBack={() => handleNavigate('/bigboard-menu')}
+      />
+    );
+  }
+
+  if (isCommunityBoardsView) {
+    if (isLoadingProspects && state.prospects.length === 0) {
+      return (
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white">
+          <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-6"></div>
+          <h2 className="text-xl font-black font-oswald uppercase tracking-widest text-emerald-400">Loading Data...</h2>
+        </div>
+      );
+    }
+    return (
+      <CommunityBoards
+        prospects={state.prospects}
+        onBack={() => handleNavigate('/bigboard-menu')}
+      />
+    );
+  }
+
   if (isBigBoardView) {
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-slate-950">
@@ -538,7 +693,7 @@ const App: React.FC = () => {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button 
-                onClick={restartApp}
+                onClick={() => handleNavigate('/bigboard-menu')}
                 className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -549,7 +704,6 @@ const App: React.FC = () => {
                 Prospect <span className="text-emerald-500">Big Board</span>
               </h1>
             </div>
-            {/* Start Simulator button removed as per request to be replaced by dropdown in BigBoard */}
           </div>
         </header>
 
@@ -829,8 +983,8 @@ const App: React.FC = () => {
   // Fallback
   return (
     <HomePage 
-      onStartDraft={() => handleNavigate('/draftsim')} 
-      onGoToBigBoard={() => handleNavigate('/bigboard')} 
+      onStartDraft={() => handleNavigate('/modeselect')} 
+      onGoToBigBoard={() => handleNavigate('/bigboard-menu')} 
     />
   );
 };

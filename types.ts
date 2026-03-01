@@ -116,3 +116,12 @@ export interface OnlineRoomState {
   participants: DraftParticipant[];
   status: 'LOBBY' | 'DRAFTING' | 'COMPLETE';
 }
+
+export interface BigBoardRecord {
+  id: string;
+  name: string;
+  creatorName: string;
+  draftYear: number;
+  prospectOrder: string[];
+  createdAt: string;
+}
