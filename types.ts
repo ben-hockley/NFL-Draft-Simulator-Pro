@@ -125,3 +125,23 @@ export interface BigBoardRecord {
   prospectOrder: string[];
   createdAt: string;
 }
+
+/** A single row (tier) in a positional tier list */
+export interface TierRow {
+  id: string;
+  label: string;
+}
+
+/**
+ * DB record for a positional tier list.
+ * tieredProspects: { [tierId]: { [position]: prospectId[] } }
+ */
+export interface PositionalTierBoard {
+  id: string;
+  name: string;
+  creatorName: string;
+  draftYear: number;
+  tiers: TierRow[];
+  tieredProspects: Record<string, Record<string, string[]>>;
+  createdAt: string;
+}
